@@ -178,16 +178,56 @@ export const deletePrompt = async (id: string) => {
 };
 
 // Test a prompt
-export const testPrompt = async (id: string, userInput: string) => {
+export const testPrompt = async (
+  id: string,
+  userInput: string,
+  variables?: Record<string, any>,
+) => {
   try {
     // Call the edge function to test the prompt
     const { data, error } = await supabase.functions.invoke("test-prompt", {
-      body: { promptId: id, userInput },
+      body: { promptId: id, userInput, variables },
     });
 
     return { data, error };
   } catch (error) {
     console.error(`Error testing prompt with ID ${id}:`, error);
     return { data: null, error };
+  }
+};
+
+// Process a prompt with template variables
+export const processPromptTemplate = async (
+  promptId: string,
+  variables: Record<string, any>,
+) => {
+  try {
+    // Get the prompt
+    const { data: prompt, error } = await getPrompt(promptId);
+
+    if (error || !prompt) {
+      throw error || new Error("Prompt not found");
+    }
+
+    // Use the template if available, otherwise fall back to content
+    const templateText = prompt.template || prompt.content;
+
+    // Call the edge function to process the template
+    const { data, error: processError } = await supabase.functions.invoke(
+      "process-prompt-template",
+      {
+        body: { template: templateText, variables },
+      },
+    );
+
+    if (processError) throw processError;
+
+    return { processedPrompt: data.processedPrompt, error: null };
+  } catch (error) {
+    console.error(
+      `Error processing prompt template with ID ${promptId}:`,
+      error,
+    );
+    return { processedPrompt: null, error };
   }
 };

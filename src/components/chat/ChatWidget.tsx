@@ -13,12 +13,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import GuestRegistrationForm from "./GuestRegistrationForm";
+import {
+  generateAIResponse,
+  processFollowUpQuestion,
+} from "@/services/aiResponseService";
 
 interface Message {
   id: string;
   content: string;
   sender: "user" | "bot";
   timestamp: Date;
+  followUpQuestions?: any[];
 }
 
 interface ChatWidgetProps {
@@ -97,7 +102,7 @@ const ChatWidget = ({
     setIsFullscreen(!isFullscreen);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (input.trim() === "") return;
 
     const newMessage: Message = {
@@ -110,17 +115,99 @@ const ChatWidget = ({
     setMessages([...messages, newMessage]);
     setInput("");
 
-    // Simulate bot response after a short delay
-    setTimeout(() => {
+    try {
+      // Generate real AI response using the template system
+      const userId = "guest-" + Date.now().toString();
+      const sessionId = "session-" + Date.now().toString();
+
+      const { response, followUpQuestions, error } = await generateAIResponse(
+        input,
+        userId,
+        sessionId,
+        {
+          user_name: "Guest",
+          conversation_history: messages
+            .map((m) => `${m.sender}: ${m.content}`)
+            .join("\n"),
+        },
+      );
+
+      if (error) throw error;
+
       const botResponse: Message = {
         id: (Date.now() + 1).toString(),
         content:
-          "This is a simulated response. In a real implementation, this would be the AI response based on your query.",
+          response || "I'm sorry, I couldn't generate a response at this time.",
+        sender: "bot",
+        timestamp: new Date(),
+        followUpQuestions: followUpQuestions,
+      };
+
+      setMessages((prev) => [...prev, botResponse]);
+    } catch (error) {
+      console.error("Error generating AI response:", error);
+
+      // Fallback response in case of error
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content:
+          "I'm sorry, I encountered an error while processing your request. Please try again later.",
         sender: "bot",
         timestamp: new Date(),
       };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  // Handle follow-up question selection
+  const handleFollowUpSelection = async (question: any) => {
+    // Add user message with the selected follow-up
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: question.question,
+      sender: "user",
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    try {
+      // Process the follow-up question
+      const userId = "guest-" + Date.now().toString();
+      const sessionId = "session-" + Date.now().toString();
+
+      const { response, error } = await processFollowUpQuestion(
+        question.id,
+        userId,
+        sessionId,
+      );
+
+      if (error) throw error;
+
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        content:
+          response || "I'm sorry, I couldn't generate a response at this time.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+
       setMessages((prev) => [...prev, botResponse]);
-    }, 1000);
+    } catch (error) {
+      console.error("Error processing follow-up question:", error);
+
+      // Fallback response
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content:
+          "I'm sorry, I encountered an error while processing your follow-up question.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    }
   };
 
   const handleRegistrationComplete = (data: {

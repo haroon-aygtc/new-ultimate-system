@@ -18,7 +18,8 @@ export interface AIModel {
 export interface Prompt {
   id: string;
   title: string;
-  content: string;
+  content: string; // Keeping for backward compatibility
+  template?: string; // New field for template with variables
   model_id: string;
   status: "active" | "inactive" | "static";
   description?: string;
@@ -150,3 +151,6 @@ export interface ScrapingResult {
   result_data: Record<string, any>;
   created_at: string;
 }
+
+// Chat types
+export * from "./chat";

@@ -11,6 +11,7 @@ import GuestSessionTable from "@/components/admin/GuestSessionTable";
 import SessionAnalytics from "@/components/admin/SessionAnalytics";
 import ComprehensiveAdminDashboard from "@/components/admin/ComprehensiveAdminDashboard";
 import UserManagement from "@/components/admin/UserManagement";
+import EmbedCodeGenerator from "@/components/admin/EmbedCodeGenerator";
 
 const GuestSessionManagement = () => {
   const location = useLocation();
@@ -61,12 +62,13 @@ const GuestSessionManagement = () => {
             onValueChange={handleTabChange}
             className="space-y-4"
           >
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="sessions">Guest Sessions</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="ai-settings">AI Settings</TabsTrigger>
               <TabsTrigger value="user-management">Users</TabsTrigger>
+              <TabsTrigger value="embed-code">Embed Code</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
 
@@ -113,6 +115,10 @@ const GuestSessionManagement = () => {
 
             <TabsContent value="user-management" className="space-y-4">
               <UserManagement />
+            </TabsContent>
+
+            <TabsContent value="embed-code" className="space-y-4">
+              <EmbedCodeGenerator />
             </TabsContent>
 
             <TabsContent value="system" className="space-y-4">

@@ -17,3 +17,9 @@ export * from "./scrapingService";
 
 // Audit Log Service
 export * from "./auditLogService";
+
+// Chat Service
+export * from "./chatService";
+
+// AI Response Service
+export * from "./aiResponseService";

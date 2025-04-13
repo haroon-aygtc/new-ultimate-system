@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Book,
   Sparkles,
+  Code,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +92,11 @@ const Sidebar = () => {
       icon: <PaintBucket className="h-5 w-5" />,
       label: "Branding",
       href: "/admin/guest-session-management?tab=branding",
+    },
+    {
+      icon: <Code className="h-5 w-5" />,
+      label: "Embed Code",
+      href: "/admin/guest-session-management?tab=embed-code",
     },
     {
       icon: <Database className="h-5 w-5" />,

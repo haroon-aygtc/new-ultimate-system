@@ -6,6 +6,26 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Substitutes variables in a template string with values from a data object
+ * @param template The template string with variables in the format {{variableName}}
+ * @param data An object containing the values to substitute
+ * @returns The template with variables replaced by their values
+ */
+function substituteTemplateVariables(
+  template: string,
+  data: Record<string, any>,
+): string {
+  if (!template) return "";
+
+  // Replace variables in the format {{variableName}} with their values
+  return template.replace(/\{\{([^}]+)\}\}/g, (match, variable) => {
+    const trimmedVar = variable.trim();
+    // Return the value if it exists, otherwise keep the original variable placeholder
+    return data[trimmedVar] !== undefined ? String(data[trimmedVar]) : match;
+  });
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -18,7 +38,13 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Parse request body
-    const { modelId, prompt } = await req.json();
+    const { modelId, prompt, variables } = await req.json();
+
+    // Process template variables if provided
+    let processedPrompt = prompt;
+    if (variables && Object.keys(variables).length > 0) {
+      processedPrompt = substituteTemplateVariables(prompt, variables);
+    }
 
     if (!modelId || !prompt) {
       return new Response(
@@ -59,22 +85,22 @@ Deno.serve(async (req) => {
     let response;
     switch (model.provider) {
       case "openai":
-        response = await callOpenAI(model, prompt);
+        response = await callOpenAI(model, processedPrompt);
         break;
       case "anthropic":
-        response = await callAnthropic(model, prompt);
+        response = await callAnthropic(model, processedPrompt);
         break;
       case "google":
-        response = await callGoogle(model, prompt);
+        response = await callGoogle(model, processedPrompt);
         break;
       case "custom":
-        response = await callCustomAPI(model, prompt);
+        response = await callCustomAPI(model, processedPrompt);
         break;
       default:
         throw new Error(`Unsupported provider: ${model.provider}`);
     }
 
-    return new Response(JSON.stringify({ response }), {
+    return new Response(JSON.stringify({ response, processedPrompt }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
