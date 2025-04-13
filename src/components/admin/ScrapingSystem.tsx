@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,10 +45,76 @@ import {
   Shield,
   Repeat,
   ArrowRight,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  LayoutGrid,
+  Layers,
 } from "lucide-react";
 import AdvancedScrapingOptions from "./AdvancedScrapingOptions";
+import { substituteTemplateVariables } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const ScrapingSystem = () => {
+  // Basic configuration state
+  const [url, setUrl] = useState("https://example.com");
+  const [exportFormat, setExportFormat] = useState("json");
+  const [selectors, setSelectors] = useState([
+    { name: "Title", selector: "h1", attribute: "text" },
+    { name: "Description", selector: ".description", attribute: "text" },
+    { name: "Image", selector: ".main-image", attribute: "src" },
+  ]);
+  const [scrapingDepth, setScrapingDepth] = useState("1");
+  const [customHeaders, setCustomHeaders] = useState(
+    '{"User-Agent": "Mozilla/5.0", "Accept-Language": "en-US,en;q=0.9"}',
+  );
+  const [filename, setFilename] = useState(
+    `scrape-result-${new Date().toISOString().split("T")[0]}`,
+  );
+  const [encoding, setEncoding] = useState("utf8");
+  const [prettyPrint, setPrettyPrint] = useState(true);
+  const [includeMetadata, setIncludeMetadata] = useState(true);
+  const [compressOutput, setCompressOutput] = useState(false);
+  const [autoDownload, setAutoDownload] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("configure");
+
+  // Advanced scraping options
+  const [selectorType, setSelectorType] = useState("css");
+  const [skipHeaders, setSkipHeaders] = useState(true);
+  const [skipFooters, setSkipFooters] = useState(true);
+  const [skipImages, setSkipImages] = useState(false);
+  const [waitForDynamicContent, setWaitForDynamicContent] = useState(false);
+  const [respectRobotsTxt, setRespectRobotsTxt] = useState(true);
+  const [handlePagination, setHandlePagination] = useState(false);
+  const [stealthMode, setStealthMode] = useState(false);
+  const [enableProxy, setEnableProxy] = useState(false);
+  const [rateLimit, setRateLimit] = useState(1000);
+  const [maxRetries, setMaxRetries] = useState(3);
+  const [followRedirects, setFollowRedirects] = useState(true);
+
+  // Text processing options
+  const [enableTextProcessing, setEnableTextProcessing] = useState(false);
+  const [cleaningLevel, setCleaningLevel] = useState("basic");
+  const [outputFormat, setOutputFormat] = useState("text");
+  const [preserveDocumentStructure, setPreserveDocumentStructure] =
+    useState(true);
+
+  // Live visualization state
+  const [resultsView, setResultsView] = useState("table"); // table, json, preview
+  const [scrapingResults, setScrapingResults] = useState([]);
+
+  // History tracking state
+  const [scrapingHistory, setScrapingHistory] = useState([]);
+  const [selectedHistoryTask, setSelectedHistoryTask] = useState(null);
+
   // Function to process text based on selected options
   const processText = (text) => {
     if (!enableTextProcessing) return text;
@@ -209,78 +275,65 @@ const ScrapingSystem = () => {
       // Process the text based on the selected options
       const processedText = processText(sampleHtml);
 
-      setScrapingResults({
-        totalUrls,
-        successful,
-        failed,
-        totalTime: `${timeDiff}s`,
-        statusDistribution,
-        removedElements,
-        rawHtml: sampleHtml,
-        processedText: processedText,
+      // Generate simulated results for live visualization
+      const simulatedResults = [];
+      selectors.forEach((selector, index) => {
+        // Generate 1-5 results per selector
+        const resultCount = 1 + Math.floor(Math.random() * 5);
+        for (let i = 0; i < resultCount; i++) {
+          simulatedResults.push({
+            id: `result-${Date.now()}-${index}-${i}`,
+            groupId: `selector-${index}`,
+            selectorName: selector.name,
+            text:
+              selector.name === "Title"
+                ? "Example Domain"
+                : selector.name === "Description"
+                  ? "This domain is for use in illustrative examples in documents."
+                  : `Sample content for ${selector.name} #${i + 1}`,
+            attributes: {
+              ...(selector.attribute === "src"
+                ? { src: "https://example.com/image.jpg" }
+                : {}),
+              ...(selector.attribute === "href"
+                ? { href: "https://example.com/link" }
+                : {}),
+              ...(selector.attribute === "alt"
+                ? { alt: `${selector.name} alt text` }
+                : {}),
+            },
+            html: `<div class="${selector.name.toLowerCase()}">${
+              selector.name === "Title"
+                ? "Example Domain"
+                : selector.name === "Description"
+                  ? "This domain is for use in illustrative examples in documents."
+                  : `Sample content for ${selector.name} #${i + 1}`
+            }</div>`,
+          });
+        }
       });
 
+      // Update the results state
+      setScrapingResults(simulatedResults);
+
+      // Add to history
+      const historyEntry = {
+        id: `task-${Date.now()}`,
+        url,
+        timestamp: new Date().toLocaleString(),
+        status: "completed",
+        resultsCount: simulatedResults.length,
+        exportFormat,
+        duration: `${timeDiff.toFixed(2)}s`,
+        config: scrapingConfig,
+        results: simulatedResults,
+      };
+      setScrapingHistory([historyEntry, ...scrapingHistory]);
+
       setIsLoading(false);
+      setActiveTab("results");
     }, 1500);
   };
-  const [url, setUrl] = useState("https://example.com");
-  const [exportFormat, setExportFormat] = useState("json");
-  const [selectors, setSelectors] = useState([
-    { name: "Title", selector: "h1", attribute: "text" },
-    { name: "Description", selector: ".description", attribute: "text" },
-    { name: "Image", selector: ".main-image", attribute: "src" },
-  ]);
-  const [scrapingDepth, setScrapingDepth] = useState("1");
-  const [customHeaders, setCustomHeaders] = useState(
-    '{"User-Agent": "Mozilla/5.0", "Accept-Language": "en-US,en;q=0.9"}',
-  );
-  const [filename, setFilename] = useState(
-    `scrape-result-${new Date().toISOString().split("T")[0]}`,
-  );
-  const [encoding, setEncoding] = useState("utf8");
-  const [prettyPrint, setPrettyPrint] = useState(true);
-  const [includeMetadata, setIncludeMetadata] = useState(true);
-  const [compressOutput, setCompressOutput] = useState(false);
-  const [autoDownload, setAutoDownload] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Advanced scraping options
-  const [selectorType, setSelectorType] = useState("css");
-  const [skipHeaders, setSkipHeaders] = useState(true);
-  const [skipFooters, setSkipFooters] = useState(true);
-  const [skipImages, setSkipImages] = useState(false);
-  const [waitForDynamicContent, setWaitForDynamicContent] = useState(false);
-  const [respectRobotsTxt, setRespectRobotsTxt] = useState(true);
-  const [handlePagination, setHandlePagination] = useState(false);
-  const [stealthMode, setStealthMode] = useState(false);
-  const [enableProxy, setEnableProxy] = useState(false);
-  const [rateLimit, setRateLimit] = useState(1000);
-  const [maxRetries, setMaxRetries] = useState(3);
-  const [followRedirects, setFollowRedirects] = useState(true);
-
-  // Text processing options
-  const [enableTextProcessing, setEnableTextProcessing] = useState(false);
-  const [cleaningLevel, setCleaningLevel] = useState("basic");
-  const [outputFormat, setOutputFormat] = useState("text");
-  const [preserveDocumentStructure, setPreserveDocumentStructure] =
-    useState(true);
-
-  // Scraping results summary
-  const [scrapingResults, setScrapingResults] = useState({
-    totalUrls: 0,
-    successful: 0,
-    failed: 0,
-    totalTime: "0s",
-    statusDistribution: {},
-    removedElements: {
-      images: 0,
-      headers: 0,
-      footers: 0,
-      ads: 0,
-    },
-    rawHtml: "",
-    processedText: "",
-  });
 
   const addSelector = () => {
     setSelectors([
@@ -307,7 +360,7 @@ const ScrapingSystem = () => {
 
   // Function to handle exporting data
   const handleExport = () => {
-    if (scrapingResults.totalUrls === 0) return;
+    if (scrapingResults.length === 0) return;
 
     console.log(`Exporting data in ${exportFormat} format`);
 
@@ -328,94 +381,74 @@ const ScrapingSystem = () => {
     let exportData;
     let exportContent;
 
-    if (enableTextProcessing && scrapingResults.processedText) {
-      // Use the processed text if text processing is enabled
-      if (outputFormat === "json") {
-        try {
-          exportData = JSON.parse(scrapingResults.processedText);
-          if (includeMetadata) {
-            exportData.metadata = {
-              ...exportData.metadata,
-              url,
-              scrapedAt: new Date().toISOString(),
-              totalUrls: scrapingResults.totalUrls,
-              successful: scrapingResults.successful,
-              failed: scrapingResults.failed,
-              totalTime: scrapingResults.totalTime,
-              exportConfig,
-            };
-          }
-          exportContent = JSON.stringify(exportData, null, prettyPrint ? 2 : 0);
-        } catch (e) {
-          // Fallback if the processed text is not valid JSON
-          exportContent = scrapingResults.processedText;
-        }
-      } else {
-        // For non-JSON formats, use the processed text directly
-        exportContent = scrapingResults.processedText;
-      }
-    } else {
-      // Default export data if text processing is not enabled
-      exportData = {
-        results: {
-          title: "Example Domain",
-          description:
-            "This domain is for use in illustrative examples in documents.",
-          content: [
-            "This domain is for use in illustrative examples in documents.",
-            "You may use this domain in literature without prior coordination or asking for permission.",
-          ],
-        },
-      };
-
-      if (includeMetadata) {
-        exportData.metadata = {
-          url,
-          scrapedAt: new Date().toISOString(),
-          totalUrls: scrapingResults.totalUrls,
-          successful: scrapingResults.successful,
-          failed: scrapingResults.failed,
-          totalTime: scrapingResults.totalTime,
+    // Format the export content based on the selected format
+    switch (exportFormat) {
+      case "json":
+        exportData = {
+          results: scrapingResults,
+          metadata: includeMetadata
+            ? {
+                url,
+                scrapedAt: new Date().toISOString(),
+                totalResults: scrapingResults.length,
+                exportConfig,
+              }
+            : undefined,
         };
-      }
-
-      // Format the export content based on the selected format
-      switch (exportFormat) {
-        case "json":
-          exportContent = JSON.stringify(exportData, null, prettyPrint ? 2 : 0);
-          break;
-        case "csv":
-          // Simple CSV conversion
-          const csvRows = [];
-          if (exportData.results.title)
-            csvRows.push(`"Title","${exportData.results.title}"`);
-          if (exportData.results.description)
-            csvRows.push(`"Description","${exportData.results.description}"`);
-          exportData.results.content.forEach((item, index) => {
-            csvRows.push(
-              `"Content ${index + 1}","${item.replace(/"/g, '""')}"`,
-            );
-          });
-          exportContent = csvRows.join("\n");
-          break;
-        case "text":
-          exportContent = `${exportData.results.title}\n\n${exportData.results.description}\n\n${exportData.results.content.join("\n\n")}`;
-          break;
-        case "html":
-          exportContent = `<!DOCTYPE html>
+        exportContent = JSON.stringify(exportData, null, prettyPrint ? 2 : 0);
+        break;
+      case "csv":
+        // Simple CSV conversion
+        const csvRows = ["selector,text,attributes"];
+        scrapingResults.forEach((result) => {
+          csvRows.push(
+            `"${result.selectorName}","${result.text.replace(/"/g, '""')}","${JSON.stringify(result.attributes).replace(/"/g, '""')}"`,
+          );
+        });
+        exportContent = csvRows.join("\n");
+        break;
+      case "text":
+        exportContent = scrapingResults
+          .map((result) => `${result.selectorName}: ${result.text}`)
+          .join("\n\n");
+        break;
+      case "html":
+        exportContent = `<!DOCTYPE html>
 <html>
 <head>
-  <title>${exportData.results.title}</title>
+  <title>Scraping Results</title>
   <meta charset="${encoding}">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .result { margin-bottom: 20px; padding: 10px; border: 1px solid #ddd; }
+    .selector-name { font-weight: bold; margin-bottom: 5px; }
+    .attributes { color: #666; font-size: 0.9em; margin-top: 5px; }
+  </style>
 </head>
 <body>
-  <h1>${exportData.results.title}</h1>
-  <p>${exportData.results.description}</p>
-  ${exportData.results.content.map((item) => `<p>${item}</p>`).join("\n  ")}
+  <h1>Scraping Results</h1>
+  ${scrapingResults
+    .map(
+      (result) => `
+  <div class="result">
+    <div class="selector-name">${result.selectorName}</div>
+    <div class="content">${result.text}</div>
+    ${
+      Object.keys(result.attributes).length > 0
+        ? `
+    <div class="attributes">
+      Attributes: ${Object.entries(result.attributes)
+        .map(([key, value]) => `${key}="${value}"`)
+        .join(", ")}
+    </div>`
+        : ""
+    }
+  </div>`,
+    )
+    .join("")}
 </body>
 </html>`;
-          break;
-      }
+        break;
     }
 
     // Apply compression if enabled
@@ -441,6 +474,29 @@ const ScrapingSystem = () => {
     }
   };
 
+  // Function to load a historical task
+  const loadHistoricalTask = (taskId) => {
+    const task = scrapingHistory.find((t) => t.id === taskId);
+    if (task) {
+      setSelectedHistoryTask(taskId);
+      setScrapingResults(task.results);
+      setActiveTab("results");
+    }
+  };
+
+  // Function to get selector color based on index
+  const getSelectorColor = (index) => {
+    const colors = [
+      "#3b82f6",
+      "#10b981",
+      "#f59e0b",
+      "#ef4444",
+      "#8b5cf6",
+      "#ec4899",
+    ];
+    return colors[index % colors.length];
+  };
+
   return (
     <div className="space-y-6">
       <Card className="bg-white border-brand-primary/10">
@@ -453,7 +509,7 @@ const ScrapingSystem = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="configure">
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="configure">Configure</TabsTrigger>
               <TabsTrigger value="selectors">Selectors</TabsTrigger>
@@ -578,6 +634,26 @@ const ScrapingSystem = () => {
                     className="font-mono text-sm"
                     disabled={stealthMode}
                   />
+                </div>
+
+                <div className="pt-4">
+                  <Button
+                    className="w-full bg-brand-primary text-white"
+                    onClick={runScraper}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Running Scraper...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="mr-2 h-4 w-4" />
+                        Run Scraper
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </TabsContent>
@@ -772,18 +848,80 @@ const ScrapingSystem = () => {
                 <div className="border rounded-md p-4 bg-brand-light/20">
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="text-sm font-medium">Results</h4>
-                    <Badge variant="outline">0 items</Badge>
+                    <Badge variant="outline">
+                      {scrapingResults.length} items
+                    </Badge>
                   </div>
 
                   <div className="h-[400px] overflow-auto bg-white border rounded-md p-4">
-                    <div className="flex flex-col items-center justify-center h-full text-brand-muted">
-                      <Globe className="h-12 w-12 mb-2 opacity-20" />
-                      <p className="text-sm">No data available</p>
-                      <p className="text-xs mt-1">
-                        Configure your selectors and run the scraper to see
-                        results
-                      </p>
-                    </div>
+                    {scrapingResults.length > 0 ? (
+                      <div className="space-y-4">
+                        {selectors.map((selector, index) => {
+                          const selectorResults = scrapingResults.filter(
+                            (result) => result.selectorName === selector.name,
+                          );
+                          if (selectorResults.length === 0) return null;
+
+                          return (
+                            <div key={index} className="space-y-2">
+                              <h3
+                                className="text-sm font-medium flex items-center"
+                                style={{ color: getSelectorColor(index) }}
+                              >
+                                <div
+                                  className="w-3 h-3 rounded-full mr-2"
+                                  style={{
+                                    backgroundColor: getSelectorColor(index),
+                                  }}
+                                ></div>
+                                {selector.name} ({selectorResults.length})
+                              </h3>
+                              <div className="border rounded-md divide-y">
+                                {selectorResults.map((result) => (
+                                  <div key={result.id} className="p-3 text-sm">
+                                    <div className="space-y-2">
+                                      <div>
+                                        <p>{result.text}</p>
+                                      </div>
+
+                                      {Object.keys(result.attributes).length >
+                                        0 && (
+                                        <div className="text-xs text-brand-muted">
+                                          <p className="font-medium">
+                                            Attributes:
+                                          </p>
+                                          <div className="space-y-1">
+                                            {Object.entries(
+                                              result.attributes,
+                                            ).map(([key, value]) => (
+                                              <div key={key}>
+                                                <span className="font-medium">
+                                                  {key}:
+                                                </span>{" "}
+                                                {value}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-brand-muted">
+                        <Globe className="h-12 w-12 mb-2 opacity-20" />
+                        <p className="text-sm">No data available</p>
+                        <p className="text-xs mt-1">
+                          Configure your selectors and run the scraper to see
+                          results
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -901,7 +1039,7 @@ const ScrapingSystem = () => {
                 <div className="pt-4 flex justify-end">
                   <Button
                     className="bg-brand-primary text-white"
-                    disabled={scrapingResults.totalUrls === 0 || isLoading}
+                    disabled={scrapingResults.length === 0 || isLoading}
                     onClick={() => handleExport()}
                   >
                     <Download className="mr-2 h-4 w-4" />
@@ -913,361 +1051,249 @@ const ScrapingSystem = () => {
 
             <TabsContent value="results" className="space-y-6">
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Scraping Results</h3>
-                  <p className="text-sm text-brand-muted mb-4">
-                    View the results of your scraping operation
-                  </p>
-                </div>
-
-                <div className="border rounded-md p-4 space-y-4">
-                  <h4 className="text-md font-medium">Summary</h4>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-brand-light/20 p-3 rounded-md">
-                      <div className="text-sm text-brand-muted">Total URLs</div>
-                      <div className="text-2xl font-semibold">
-                        {scrapingResults.totalUrls}
-                      </div>
-                    </div>
-
-                    <div className="bg-green-50 p-3 rounded-md">
-                      <div className="text-sm text-green-600">Successful</div>
-                      <div className="text-2xl font-semibold text-green-700">
-                        {scrapingResults.successful}
-                      </div>
-                    </div>
-
-                    <div className="bg-red-50 p-3 rounded-md">
-                      <div className="text-sm text-red-600">Failed</div>
-                      <div className="text-2xl font-semibold text-red-700">
-                        {scrapingResults.failed}
-                      </div>
-                    </div>
-
-                    <div className="bg-brand-light/20 p-3 rounded-md">
-                      <div className="text-sm text-brand-muted">Total Time</div>
-                      <div className="text-2xl font-semibold">
-                        {scrapingResults.totalTime}
-                      </div>
-                    </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg font-medium">Scraping Results</h3>
+                    <p className="text-sm text-brand-muted">
+                      View and analyze the data extracted from the target
+                      website
+                    </p>
                   </div>
+                  <div className="flex space-x-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={
+                              resultsView === "table" ? "default" : "outline"
+                            }
+                            size="icon"
+                            onClick={() => setResultsView("table")}
+                          >
+                            <LayoutGrid className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Table View</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
 
-                  <div className="mt-4">
-                    <h5 className="text-sm font-medium mb-2">
-                      Status Distribution
-                    </h5>
-                    <div className="h-8 bg-gray-100 rounded-md overflow-hidden flex">
-                      {/* Calculate percentages based on actual data */}
-                      {Object.entries(scrapingResults.statusDistribution)
-                        .length > 0 ? (
-                        <>
-                          {/* 2xx Success */}
-                          {Object.entries(scrapingResults.statusDistribution)
-                            .filter(([code]) => code.startsWith("2"))
-                            .reduce((sum, [_, count]) => sum + count, 0) >
-                            0 && (
-                            <div
-                              className="bg-green-500 h-full"
-                              style={{
-                                width: `${
-                                  (Object.entries(
-                                    scrapingResults.statusDistribution,
-                                  )
-                                    .filter(([code]) => code.startsWith("2"))
-                                    .reduce(
-                                      (sum, [_, count]) => sum + count,
-                                      0,
-                                    ) /
-                                    scrapingResults.totalUrls) *
-                                  100
-                                }%`,
-                              }}
-                            ></div>
-                          )}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={
+                              resultsView === "json" ? "default" : "outline"
+                            }
+                            size="icon"
+                            onClick={() => setResultsView("json")}
+                          >
+                            <Code className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>JSON View</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
 
-                          {/* 3xx Redirect */}
-                          {Object.entries(scrapingResults.statusDistribution)
-                            .filter(([code]) => code.startsWith("3"))
-                            .reduce((sum, [_, count]) => sum + count, 0) >
-                            0 && (
-                            <div
-                              className="bg-yellow-500 h-full"
-                              style={{
-                                width: `${
-                                  (Object.entries(
-                                    scrapingResults.statusDistribution,
-                                  )
-                                    .filter(([code]) => code.startsWith("3"))
-                                    .reduce(
-                                      (sum, [_, count]) => sum + count,
-                                      0,
-                                    ) /
-                                    scrapingResults.totalUrls) *
-                                  100
-                                }%`,
-                              }}
-                            ></div>
-                          )}
-
-                          {/* 4xx Client Error */}
-                          {Object.entries(scrapingResults.statusDistribution)
-                            .filter(([code]) => code.startsWith("4"))
-                            .reduce((sum, [_, count]) => sum + count, 0) >
-                            0 && (
-                            <div
-                              className="bg-orange-500 h-full"
-                              style={{
-                                width: `${
-                                  (Object.entries(
-                                    scrapingResults.statusDistribution,
-                                  )
-                                    .filter(([code]) => code.startsWith("4"))
-                                    .reduce(
-                                      (sum, [_, count]) => sum + count,
-                                      0,
-                                    ) /
-                                    scrapingResults.totalUrls) *
-                                  100
-                                }%`,
-                              }}
-                            ></div>
-                          )}
-
-                          {/* 5xx Server Error */}
-                          {Object.entries(scrapingResults.statusDistribution)
-                            .filter(([code]) => code.startsWith("5"))
-                            .reduce((sum, [_, count]) => sum + count, 0) >
-                            0 && (
-                            <div
-                              className="bg-red-500 h-full"
-                              style={{
-                                width: `${
-                                  (Object.entries(
-                                    scrapingResults.statusDistribution,
-                                  )
-                                    .filter(([code]) => code.startsWith("5"))
-                                    .reduce(
-                                      (sum, [_, count]) => sum + count,
-                                      0,
-                                    ) /
-                                    scrapingResults.totalUrls) *
-                                  100
-                                }%`,
-                              }}
-                            ></div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <div
-                            className="bg-green-500 h-full"
-                            style={{ width: "70%" }}
-                          ></div>
-                          <div
-                            className="bg-yellow-500 h-full"
-                            style={{ width: "20%" }}
-                          ></div>
-                          <div
-                            className="bg-red-500 h-full"
-                            style={{ width: "10%" }}
-                          ></div>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex justify-between text-xs text-brand-muted mt-1">
-                      {scrapingResults.totalUrls > 0 ? (
-                        <>
-                          <div>
-                            2xx Success:
-                            {Math.round(
-                              (Object.entries(
-                                scrapingResults.statusDistribution,
-                              )
-                                .filter(([code]) => code.startsWith("2"))
-                                .reduce((sum, [_, count]) => sum + count, 0) /
-                                scrapingResults.totalUrls) *
-                                100,
-                            )}
-                            %
-                          </div>
-                          <div>
-                            3xx Redirect:
-                            {Math.round(
-                              (Object.entries(
-                                scrapingResults.statusDistribution,
-                              )
-                                .filter(([code]) => code.startsWith("3"))
-                                .reduce((sum, [_, count]) => sum + count, 0) /
-                                scrapingResults.totalUrls) *
-                                100,
-                            )}
-                            %
-                          </div>
-                          <div>
-                            4xx/5xx Error:
-                            {Math.round(
-                              (Object.entries(
-                                scrapingResults.statusDistribution,
-                              )
-                                .filter(
-                                  ([code]) =>
-                                    code.startsWith("4") ||
-                                    code.startsWith("5"),
-                                )
-                                .reduce((sum, [_, count]) => sum + count, 0) /
-                                scrapingResults.totalUrls) *
-                                100,
-                            )}
-                            %
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div>200 OK: 70%</div>
-                          <div>30x Redirect: 20%</div>
-                          <div>40x/50x Error: 10%</div>
-                        </>
-                      )}
-                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={
+                              resultsView === "preview" ? "default" : "outline"
+                            }
+                            size="icon"
+                            onClick={() => setResultsView("preview")}
+                          >
+                            <Layers className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Visual Preview</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
 
-                <div className="border rounded-md p-4 space-y-4">
-                  <h4 className="text-md font-medium">Removed Elements</h4>
-                  <p className="text-sm text-brand-muted">
-                    Images, headers, footers, and ads removed
-                  </p>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-brand-light/20 p-3 rounded-md">
-                      <div className="text-sm text-brand-muted">Images</div>
-                      <div className="text-2xl font-semibold">
-                        {scrapingResults.removedElements.images}
-                      </div>
-                    </div>
-
-                    <div className="bg-brand-light/20 p-3 rounded-md">
-                      <div className="text-sm text-brand-muted">Headers</div>
-                      <div className="text-2xl font-semibold">
-                        {scrapingResults.removedElements.headers}
-                      </div>
-                    </div>
-
-                    <div className="bg-brand-light/20 p-3 rounded-md">
-                      <div className="text-sm text-brand-muted">Footers</div>
-                      <div className="text-2xl font-semibold">
-                        {scrapingResults.removedElements.footers}
-                      </div>
-                    </div>
-
-                    <div className="bg-brand-light/20 p-3 rounded-md">
-                      <div className="text-sm text-brand-muted">Ads</div>
-                      <div className="text-2xl font-semibold">
-                        {scrapingResults.removedElements.ads}
-                      </div>
+                {scrapingResults.length === 0 ? (
+                  <div className="border rounded-md p-8 bg-muted/50 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <Globe className="h-8 w-8 text-muted-foreground" />
+                      <p className="text-muted-foreground">
+                        Run a scraping task to see results here
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => setActiveTab("configure")}
+                      >
+                        Go to Configuration
+                      </Button>
                     </div>
                   </div>
-                </div>
-
-                <div className="border rounded-md p-4 space-y-4">
-                  <h4 className="text-md font-medium">Details</h4>
-
+                ) : (
                   <div className="space-y-4">
-                    <Tabs defaultValue="raw">
-                      <TabsList>
-                        <TabsTrigger value="raw">Raw HTML</TabsTrigger>
-                        <TabsTrigger value="cleaned">Cleaned Text</TabsTrigger>
-                        <TabsTrigger value="structured">
-                          Structured Data
-                        </TabsTrigger>
-                      </TabsList>
+                    {resultsView === "table" && (
+                      <div className="border rounded-md overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[150px]">
+                                Selector
+                              </TableHead>
+                              <TableHead>Content</TableHead>
+                              <TableHead className="w-[200px]">
+                                Attributes
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {scrapingResults.map((result) => (
+                              <TableRow key={result.id}>
+                                <TableCell>
+                                  <div className="flex items-center space-x-2">
+                                    <div
+                                      className="w-3 h-3 rounded-full"
+                                      style={{
+                                        backgroundColor: getSelectorColor(
+                                          selectors.findIndex(
+                                            (s) =>
+                                              s.name === result.selectorName,
+                                          ),
+                                        ),
+                                      }}
+                                    ></div>
+                                    <span>{result.selectorName}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="max-h-20 overflow-auto">
+                                    <p className="whitespace-pre-wrap text-sm">
+                                      {result.text}
+                                    </p>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {Object.keys(result.attributes).length > 0 ? (
+                                    <div className="max-h-20 overflow-auto">
+                                      {Object.entries(result.attributes).map(
+                                        ([key, value]) => (
+                                          <div key={key} className="text-sm">
+                                            <span className="font-medium">
+                                              {key}:
+                                            </span>{" "}
+                                            {value}
+                                          </div>
+                                        ),
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted-foreground text-sm">
+                                      No attributes
+                                    </span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
 
-                      <TabsContent value="raw" className="mt-4">
-                        <div className="bg-gray-50 p-4 rounded-md h-60 overflow-auto font-mono text-xs">
-                          <pre>
-                            {scrapingResults.rawHtml ||
-                              `<!DOCTYPE html>
-<html>
-  <head>
-    <title>Example Domain</title>
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-  </head>
-  <body>
-    <div>
-      <h1>Example Domain</h1>
-      <p>This domain is for use in illustrative examples in documents.</p>
-      <p>You may use this domain in literature without prior coordination or asking for permission.</p>
-    </div>
-  </body>
-</html>`}
-                          </pre>
-                        </div>
-                      </TabsContent>
+                    {resultsView === "json" && (
+                      <div className="border rounded-md p-4 bg-muted/50 overflow-auto max-h-[500px]">
+                        <pre className="text-xs">
+                          {JSON.stringify(scrapingResults, null, 2)}
+                        </pre>
+                      </div>
+                    )}
 
-                      <TabsContent value="cleaned" className="mt-4">
-                        <div className="bg-gray-50 p-4 rounded-md h-60 overflow-auto text-xs">
-                          {cleaningLevel === "basic" &&
-                          scrapingResults.processedText ? (
-                            <div>
-                              {scrapingResults.processedText
-                                .split("\n")
-                                .map((line, i) => (
-                                  <p
-                                    key={i}
-                                    className={
-                                      i === 0
-                                        ? "font-bold text-lg mb-2"
-                                        : "mb-2"
-                                    }
+                    {resultsView === "preview" && (
+                      <div className="space-y-4">
+                        {selectors.map((selector, index) => {
+                          const selectorResults = scrapingResults.filter(
+                            (result) => result.selectorName === selector.name,
+                          );
+                          if (selectorResults.length === 0) return null;
+
+                          return (
+                            <div key={index} className="space-y-2">
+                              <h3
+                                className="text-sm font-medium flex items-center"
+                                style={{ color: getSelectorColor(index) }}
+                              >
+                                <div
+                                  className="w-3 h-3 rounded-full mr-2"
+                                  style={{
+                                    backgroundColor: getSelectorColor(index),
+                                  }}
+                                ></div>
+                                {selector.name} ({selectorResults.length})
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {selectorResults.map((result) => (
+                                  <div
+                                    key={result.id}
+                                    className="border rounded-md p-3 text-sm"
+                                    style={{
+                                      borderLeftColor: getSelectorColor(index),
+                                      borderLeftWidth: "3px",
+                                    }}
                                   >
-                                    {line}
-                                  </p>
-                                ))}
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="font-bold text-lg mb-2">
-                                Example Domain
-                              </p>
-                              <p className="mb-2">
-                                This domain is for use in illustrative examples
-                                in documents.
-                              </p>
-                              <p>
-                                You may use this domain in literature without
-                                prior coordination or asking for permission.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
+                                    <div className="space-y-2">
+                                      <div className="max-h-24 overflow-auto">
+                                        <p className="whitespace-pre-wrap">
+                                          {result.text}
+                                        </p>
+                                      </div>
 
-                      <TabsContent value="structured" className="mt-4">
-                        <div className="bg-gray-50 p-4 rounded-md h-60 overflow-auto font-mono text-xs">
-                          <pre>
-                            {outputFormat === "json" &&
-                            scrapingResults.processedText
-                              ? scrapingResults.processedText
-                              : `{
-  "title": "Example Domain",
-  "content": [
-    "This domain is for use in illustrative examples in documents.",
-    "You may use this domain in literature without prior coordination or asking for permission."
-  ],
-  "metadata": {
-    "url": "${url}",
-    "scrapedAt": "${new Date().toISOString()}"
-  }
-}`}
-                          </pre>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
+                                      {Object.keys(result.attributes).length >
+                                        0 && (
+                                        <div>
+                                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                                            Attributes:
+                                          </p>
+                                          <div className="space-y-1">
+                                            {Object.entries(
+                                              result.attributes,
+                                            ).map(([key, value]) => (
+                                              <div
+                                                key={key}
+                                                className="text-xs"
+                                              >
+                                                <span className="font-medium">
+                                                  {key}:
+                                                </span>{" "}
+                                                {value}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center pt-2">
+                      <div className="text-sm text-muted-foreground">
+                        {scrapingResults.length} results found
+                      </div>
+                      <Button onClick={handleExport}>
+                        <Download className="mr-2 h-4 w-4" /> Export as{" "}
+                        {exportFormat.toUpperCase()}
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
