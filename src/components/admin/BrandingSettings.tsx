@@ -300,7 +300,7 @@ const BrandingSettings = () => {
   };
 
   // Handle message formatting option changes
-  const handleMessageFormattingChange = (option, value) => {
+  const handleMessageFormattingChange = (option: string, value: boolean) => {
     switch (option) {
       case "markdown":
         setEnableMarkdown(value);
@@ -1330,7 +1330,7 @@ const BrandingSettings = () => {
 export default BrandingSettings;
 
 // Helper component for the Send icon
-const Send = ({ className }) => (
+const Send = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -1347,7 +1347,7 @@ const Send = ({ className }) => (
 );
 
 // Helper component for the X icon
-const X = ({ className }) => (
+const X = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
