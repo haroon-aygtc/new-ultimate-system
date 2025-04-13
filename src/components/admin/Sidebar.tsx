@@ -86,14 +86,19 @@ const Sidebar = () => {
       href: "/admin/guest-session-management?tab=ai-settings",
     },
     {
+      icon: <Users className="h-5 w-5" />,
+      label: "User Management",
+      href: "/admin/guest-session-management?tab=user-management",
+    },
+    {
       icon: <FileText className="h-5 w-5" />,
       label: "Audit Logs",
-      href: "/admin/guest-session-management?tab=logs",
+      href: "/admin/guest-session-management?tab=audit-logs",
     },
     {
       icon: <Settings className="h-5 w-5" />,
       label: "Settings",
-      href: "/admin/guest-session-management?tab=ai-settings",
+      href: "/admin/guest-session-management?tab=system-settings",
     },
   ];
 

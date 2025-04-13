@@ -66,9 +66,11 @@ export default function Register() {
       setIsLoading(true);
       setError(null);
 
+      // Register as a regular user
       const { data: authData, error: authError } = await signUp(
         data.email,
         data.password,
+        "user", // Explicitly set role to 'user'
       );
 
       if (authError) {

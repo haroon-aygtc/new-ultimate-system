@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { signIn } from "@/lib/supabaseClient";
+import { signIn, getUserRole } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -36,8 +36,16 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(
+    location.state?.message || null,
+  );
+
+  // Get the return URL from query params if it exists
+  const searchParams = new URLSearchParams(location.search);
+  const returnUrl = searchParams.get("returnUrl");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -51,6 +59,7 @@ export default function Login() {
     try {
       setIsLoading(true);
       setError(null);
+      setSuccessMessage(null);
 
       const { data: authData, error: authError } = await signIn(
         data.email,
@@ -62,8 +71,29 @@ export default function Login() {
         return;
       }
 
-      if (authData) {
-        navigate("/admin/guest-session-management");
+      if (authData && authData.user) {
+        // Get user role
+        const {
+          role,
+          isGuest,
+          error: roleError,
+        } = await getUserRole(authData.user.id);
+
+        if (roleError) {
+          setError("Error retrieving user role");
+          return;
+        }
+
+        // Redirect based on role
+        if (returnUrl) {
+          navigate(decodeURIComponent(returnUrl));
+        } else if (role === "admin") {
+          navigate("/admin/guest-session-management");
+        } else if (role === "user") {
+          navigate("/"); // Regular users go to home page
+        } else {
+          setError("Invalid user role");
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -91,6 +121,11 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {successMessage && (
+              <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
+            )}
             {error && (
               <Alert className="mb-4 border-destructive/50 text-destructive">
                 <AlertCircle className="h-4 w-4 mr-2" />

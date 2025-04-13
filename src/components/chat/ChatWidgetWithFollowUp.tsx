@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, User, Bot, X, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, registerGuestUser } from "@/lib/supabaseClient";
 import { GuestUser, ChatMessage, GuestSession } from "@/types/guestSession";
 import GuestRegistrationForm from "./GuestRegistrationForm";
 
@@ -323,20 +323,13 @@ const ChatWidgetWithFollowUp: React.FC<ChatWidgetProps> = ({
     phone: string;
   }) => {
     try {
-      // Create a new guest user
-      const newUser: GuestUser = {
-        id: crypto.randomUUID(),
-        name: userData.name,
-        phone: userData.phone,
-        created_at: new Date().toISOString(),
-        last_active_at: new Date().toISOString(),
-      };
+      // Register guest user using our new function
+      const { user: newUser, error: registrationError } =
+        await registerGuestUser(userData.name, userData.phone);
 
-      const { error: userError } = await supabase
-        .from("guest_users")
-        .insert([newUser]);
-
-      if (userError) throw userError;
+      if (registrationError || !newUser) {
+        throw registrationError || new Error("Failed to register guest user");
+      }
 
       // Create a new session
       const newSession: GuestSession = {
@@ -369,7 +362,13 @@ const ChatWidgetWithFollowUp: React.FC<ChatWidgetProps> = ({
       if (messageError) throw messageError;
 
       // Update state
-      setUser(newUser);
+      setUser({
+        id: newUser.id,
+        name: newUser.name,
+        phone: newUser.phone,
+        created_at: new Date().toISOString(),
+        last_active_at: new Date().toISOString(),
+      });
       setSession(newSession);
       setMessages([welcomeMessage]);
 

@@ -21,10 +21,13 @@ import {
   MessageSquare,
   Edit,
   Check,
+  Users,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import DashboardOverview from "@/components/admin/DashboardOverview";
 import AIModelSettings from "@/components/admin/AIModelSettings";
+import UserManagement from "@/components/admin/UserManagement";
+import AuditLogs from "@/components/admin/AuditLogs";
 
 const ComprehensiveAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -46,6 +49,8 @@ const ComprehensiveAdminDashboard = () => {
             {activeTab === "scraping" && "Web Scraping System"}
             {activeTab === "system-settings" && "System Settings"}
             {activeTab === "status-tracking" && "Status Tracking"}
+            {activeTab === "user-management" && "User Management"}
+            {activeTab === "audit-logs" && "Audit Logs"}
           </h1>
           <p className="text-brand-muted">
             {activeTab === "dashboard" &&
@@ -61,6 +66,8 @@ const ComprehensiveAdminDashboard = () => {
               "Configure global system settings"}
             {activeTab === "status-tracking" &&
               "Monitor and change component status"}
+            {activeTab === "user-management" && "Manage users and their roles"}
+            {activeTab === "audit-logs" && "View system activity logs"}
           </p>
         </div>
       </div>
@@ -118,6 +125,20 @@ const ComprehensiveAdminDashboard = () => {
                 >
                   <AlertCircle className="h-4 w-4 mr-2" />
                   Status Tracking
+                </TabsTrigger>
+                <TabsTrigger
+                  value="user-management"
+                  className="data-[state=active]:border-brand-primary data-[state=active]:text-brand-primary rounded-none border-b-2 border-transparent px-4 py-3 font-medium"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  User Management
+                </TabsTrigger>
+                <TabsTrigger
+                  value="audit-logs"
+                  className="data-[state=active]:border-brand-primary data-[state=active]:text-brand-primary rounded-none border-b-2 border-transparent px-4 py-3 font-medium"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Audit Logs
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -303,6 +324,30 @@ const ComprehensiveAdminDashboard = () => {
                 <div className="text-center text-brand-muted py-8">
                   Status Tracking content will be implemented here
                 </div>
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="user-management" className="mt-0">
+              <motion.div
+                key="user-management"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <UserManagement />
+              </motion.div>
+            </TabsContent>
+
+            <TabsContent value="audit-logs" className="mt-0">
+              <motion.div
+                key="audit-logs"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AuditLogs />
               </motion.div>
             </TabsContent>
           </CardContent>
