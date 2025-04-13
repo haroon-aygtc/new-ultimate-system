@@ -11,36 +11,44 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Search, Plus, Bot, Settings, Trash2 } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  Plus,
+  Book,
+  Settings,
+  Trash2,
+  FileText,
+} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  getAIModels,
-  updateAIModelStatus,
-  deleteAIModel,
-} from "@/services/aiModelService";
-import { AIModel } from "@/types";
+  getKnowledgeBases,
+  updateKnowledgeBaseStatus,
+  deleteKnowledgeBase,
+} from "@/services/knowledgeBaseService";
+import { KnowledgeBase } from "@/types";
 import Layout from "@/components/Layout";
 
-const AIModels = () => {
+const KnowledgeBases = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [models, setModels] = useState<AIModel[]>([]);
+  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
-    const loadModels = async () => {
+    const loadKnowledgeBases = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await getAIModels();
+        const { data, error } = await getKnowledgeBases();
         if (error) throw error;
-        if (data) setModels(data);
+        if (data) setKnowledgeBases(data);
       } catch (error) {
-        console.error("Error loading AI models:", error);
+        console.error("Error loading knowledge bases:", error);
         toast({
           title: "Error",
-          description: "Could not load AI models. Please try again.",
+          description: "Could not load knowledge bases. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -48,26 +56,22 @@ const AIModels = () => {
       }
     };
 
-    loadModels();
+    loadKnowledgeBases();
   }, [toast]);
 
-  const filteredModels = models.filter((model) => {
+  const filteredKnowledgeBases = knowledgeBases.filter((kb) => {
     // Filter by search query
     const matchesSearch =
       searchQuery === "" ||
-      model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      model.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      model.model_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (model.description || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      kb.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (kb.description || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     // Filter by tab
     const matchesTab =
       activeTab === "all" ||
-      (activeTab === "active" && model.status === "active") ||
-      (activeTab === "inactive" && model.status === "inactive") ||
-      (activeTab === "static" && model.status === "static");
+      (activeTab === "active" && kb.status === "active") ||
+      (activeTab === "inactive" && kb.status === "inactive") ||
+      (activeTab === "static" && kb.status === "static");
 
     return matchesSearch && matchesTab;
   });
@@ -77,70 +81,54 @@ const AIModels = () => {
     status: "static" | "active" | "inactive",
   ) => {
     try {
-      const { success, error } = await updateAIModelStatus(id, status);
+      const { success, error } = await updateKnowledgeBaseStatus(id, status);
       if (error) throw error;
       if (success) {
-        setModels(
-          models.map((model) =>
-            model.id === id ? { ...model, status } : model,
-          ),
+        setKnowledgeBases(
+          knowledgeBases.map((kb) => (kb.id === id ? { ...kb, status } : kb)),
         );
         toast({
           title: "Status Updated",
-          description: `Model status changed to ${status}.`,
+          description: `Knowledge base status changed to ${status}.`,
         });
       }
     } catch (error) {
-      console.error("Error updating model status:", error);
+      console.error("Error updating knowledge base status:", error);
       toast({
         title: "Error",
-        description: "Could not update model status. Please try again.",
+        description:
+          "Could not update knowledge base status. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteModel = async (id: string) => {
+  const handleDeleteKnowledgeBase = async (id: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this model? This action cannot be undone.",
+        "Are you sure you want to delete this knowledge base? This action cannot be undone.",
       )
     ) {
       return;
     }
 
     try {
-      const { success, error } = await deleteAIModel(id);
+      const { success, error } = await deleteKnowledgeBase(id);
       if (error) throw error;
       if (success) {
-        setModels(models.filter((model) => model.id !== id));
+        setKnowledgeBases(knowledgeBases.filter((kb) => kb.id !== id));
         toast({
-          title: "Model Deleted",
-          description: "The AI model has been deleted successfully.",
+          title: "Knowledge Base Deleted",
+          description: "The knowledge base has been deleted successfully.",
         });
       }
     } catch (error) {
-      console.error("Error deleting model:", error);
+      console.error("Error deleting knowledge base:", error);
       toast({
         title: "Error",
-        description: "Could not delete the model. Please try again.",
+        description: "Could not delete the knowledge base. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-
-  const getProviderLabel = (provider: string) => {
-    switch (provider) {
-      case "openai":
-        return "OpenAI";
-      case "anthropic":
-        return "Anthropic";
-      case "google":
-        return "Google";
-      case "custom":
-        return "Custom";
-      default:
-        return provider;
     }
   };
 
@@ -161,18 +149,18 @@ const AIModels = () => {
     <Layout>
       <div className="container mx-auto py-6 space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">AI Models</h1>
-          <Button onClick={() => navigate("/ai-models/new")}>
+          <h1 className="text-3xl font-bold">Knowledge Bases</h1>
+          <Button onClick={() => navigate("/knowledge-base/new")}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Model
+            Add Knowledge Base
           </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Manage AI Models</CardTitle>
+            <CardTitle>Manage Knowledge Bases</CardTitle>
             <CardDescription>
-              Configure and manage AI models for your application.
+              Configure and manage knowledge bases for your AI models.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -181,7 +169,7 @@ const AIModels = () => {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by name, provider, or model ID..."
+                  placeholder="Search by name or description..."
                   className="pl-8"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -191,7 +179,7 @@ const AIModels = () => {
 
             <Tabs defaultValue="all" onValueChange={setActiveTab}>
               <TabsList className="mb-4">
-                <TabsTrigger value="all">All Models</TabsTrigger>
+                <TabsTrigger value="all">All Knowledge Bases</TabsTrigger>
                 <TabsTrigger value="active">Active</TabsTrigger>
                 <TabsTrigger value="inactive">Inactive</TabsTrigger>
                 <TabsTrigger value="static">Static</TabsTrigger>
@@ -202,70 +190,70 @@ const AIModels = () => {
                   <div className="flex justify-center items-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <span className="ml-2 text-muted-foreground">
-                      Loading models...
+                      Loading knowledge bases...
                     </span>
                   </div>
-                ) : filteredModels.length === 0 ? (
+                ) : filteredKnowledgeBases.length === 0 ? (
                   <div className="text-center py-12 border rounded-md bg-muted/10">
-                    <p className="text-muted-foreground">No models found.</p>
+                    <p className="text-muted-foreground">
+                      No knowledge bases found.
+                    </p>
                     <Button
                       variant="outline"
                       className="mt-4"
-                      onClick={() => navigate("/ai-models/new")}
+                      onClick={() => navigate("/knowledge-base/new")}
                     >
-                      Add your first model
+                      Add your first knowledge base
                     </Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredModels.map((model) => (
-                      <Card key={model.id} className="overflow-hidden">
+                    {filteredKnowledgeBases.map((kb) => (
+                      <Card key={kb.id} className="overflow-hidden">
                         <div className="p-6">
                           <div className="flex justify-between items-start">
                             <div className="flex items-center space-x-2">
-                              <Bot className="h-5 w-5 text-primary" />
-                              <h3 className="font-medium">{model.name}</h3>
+                              <Book className="h-5 w-5 text-primary" />
+                              <h3 className="font-medium">{kb.name}</h3>
                             </div>
-                            {getStatusBadge(model.status)}
+                            {getStatusBadge(kb.status)}
                           </div>
 
                           <div className="mt-2 space-y-1">
-                            <p className="text-sm font-medium">
-                              {getProviderLabel(model.provider)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {model.model_id}
-                            </p>
-                            {model.description && (
-                              <p className="text-sm text-muted-foreground mt-2">
-                                {model.description}
+                            {kb.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {kb.description}
                               </p>
                             )}
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <FileText className="h-3 w-3 mr-1" />
+                              {kb.documents ? kb.documents.length : 0} documents
+                            </div>
                           </div>
                         </div>
 
                         <div className="bg-muted/20 p-3 flex justify-between items-center">
                           <div className="space-x-1">
-                            {model.status !== "active" && (
+                            {kb.status !== "active" && (
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 className="text-green-600 hover:text-green-700 hover:bg-green-50"
                                 onClick={() =>
-                                  handleStatusChange(model.id, "active")
+                                  handleStatusChange(kb.id, "active")
                                 }
                               >
                                 Activate
                               </Button>
                             )}
-                            {model.status !== "inactive" &&
-                              model.status !== "static" && (
+                            {kb.status !== "inactive" &&
+                              kb.status !== "static" && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
                                   className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                                   onClick={() =>
-                                    handleStatusChange(model.id, "inactive")
+                                    handleStatusChange(kb.id, "inactive")
                                   }
                                 >
                                   Deactivate
@@ -277,7 +265,9 @@ const AIModels = () => {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => navigate(`/ai-models/${model.id}`)}
+                              onClick={() =>
+                                navigate(`/knowledge-base/${kb.id}`)
+                              }
                             >
                               <Settings className="h-4 w-4" />
                             </Button>
@@ -285,7 +275,7 @@ const AIModels = () => {
                               size="sm"
                               variant="ghost"
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleDeleteModel(model.id)}
+                              onClick={() => handleDeleteKnowledgeBase(kb.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -304,4 +294,4 @@ const AIModels = () => {
   );
 };
 
-export default AIModels;
+export default KnowledgeBases;

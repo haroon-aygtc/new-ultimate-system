@@ -4,6 +4,9 @@ import AIModelStoryboard from "./AIModelStoryboard";
 import ScrapingStoryboard from "./ScrapingStoryboard";
 import AuditLogStoryboard from "./AuditLogStoryboard";
 import ChatWidgetStoryboard from "./ChatWidgetStoryboard";
+import KnowledgeBaseStoryboard from "./KnowledgeBaseStoryboard";
+import PromptStoryboard from "./PromptStoryboard";
+import FollowUpQuestionStoryboard from "./FollowUpQuestionStoryboard";
 
 export {
   DashboardStoryboard,
@@ -12,4 +15,7 @@ export {
   ScrapingStoryboard,
   AuditLogStoryboard,
   ChatWidgetStoryboard,
+  KnowledgeBaseStoryboard,
+  PromptStoryboard,
+  FollowUpQuestionStoryboard,
 };

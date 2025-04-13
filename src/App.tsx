@@ -22,6 +22,15 @@ const GuestSessionManagement = lazy(
   () => import("./pages/admin/GuestSessionManagement"),
 );
 
+// AI Integration Components
+const AIModels = lazy(() => import("./pages/ai-models/index"));
+const AIModelDetail = lazy(() => import("./pages/ai-models/[id]"));
+const NewAIModel = lazy(() => import("./pages/ai-models/new"));
+const Prompts = lazy(() => import("./pages/prompts/index"));
+const NewPrompt = lazy(() => import("./pages/prompts/new"));
+const KnowledgeBases = lazy(() => import("./pages/knowledge-base/index"));
+const NewKnowledgeBase = lazy(() => import("./pages/knowledge-base/new"));
+
 // Loading component for suspense fallback
 const LoadingScreen = () => (
   <div className="flex items-center justify-center h-screen w-screen bg-brand-light">
@@ -144,6 +153,46 @@ function AppRoutes() {
             element={<GuestSessionManagement />}
             requiredRole="admin"
           />
+        }
+      />
+
+      {/* AI Integration routes */}
+      <Route
+        path="/ai-models"
+        element={<ProtectedRoute element={<AIModels />} requiredRole="admin" />}
+      />
+      <Route
+        path="/ai-models/new"
+        element={
+          <ProtectedRoute element={<NewAIModel />} requiredRole="admin" />
+        }
+      />
+      <Route
+        path="/ai-models/:id"
+        element={
+          <ProtectedRoute element={<AIModelDetail />} requiredRole="admin" />
+        }
+      />
+      <Route
+        path="/prompts"
+        element={<ProtectedRoute element={<Prompts />} requiredRole="admin" />}
+      />
+      <Route
+        path="/prompts/new"
+        element={
+          <ProtectedRoute element={<NewPrompt />} requiredRole="admin" />
+        }
+      />
+      <Route
+        path="/knowledge-base"
+        element={
+          <ProtectedRoute element={<KnowledgeBases />} requiredRole="admin" />
+        }
+      />
+      <Route
+        path="/knowledge-base/new"
+        element={
+          <ProtectedRoute element={<NewKnowledgeBase />} requiredRole="admin" />
         }
       />
 

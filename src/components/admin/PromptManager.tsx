@@ -18,33 +18,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Bot, Settings, Trash2 } from "lucide-react";
+import { Loader2, Plus, MessageSquare, Settings, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  getAIModels,
-  updateAIModelStatus,
-  deleteAIModel,
-} from "@/services/aiModelService";
-import { AIModel } from "@/types";
+  getPrompts,
+  updatePromptStatus,
+  deletePrompt,
+} from "@/services/promptService";
+import { Prompt } from "@/types";
 
-const AIModelSettings = () => {
+const PromptManager = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [models, setModels] = useState<AIModel[]>([]);
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const loadModels = async () => {
+    const loadPrompts = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await getAIModels();
+        const { data, error } = await getPrompts();
         if (error) throw error;
-        if (data) setModels(data);
+        if (data) setPrompts(data);
       } catch (error) {
-        console.error("Error loading AI models:", error);
+        console.error("Error loading prompts:", error);
         toast({
           title: "Error",
-          description: "Could not load AI models. Please try again.",
+          description: "Could not load prompts. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -52,78 +53,73 @@ const AIModelSettings = () => {
       }
     };
 
-    loadModels();
+    loadPrompts();
   }, [toast]);
+
+  const filteredPrompts = prompts.filter((prompt) => {
+    return (
+      searchQuery === "" ||
+      prompt.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (prompt.description || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  });
 
   const handleStatusChange = async (
     id: string,
     status: "static" | "active" | "inactive",
   ) => {
     try {
-      const { success, error } = await updateAIModelStatus(id, status);
+      const { success, error } = await updatePromptStatus(id, status);
       if (error) throw error;
       if (success) {
-        setModels(
-          models.map((model) =>
-            model.id === id ? { ...model, status } : model,
+        setPrompts(
+          prompts.map((prompt) =>
+            prompt.id === id ? { ...prompt, status } : prompt,
           ),
         );
         toast({
           title: "Status Updated",
-          description: `Model status changed to ${status}.`,
+          description: `Prompt status changed to ${status}.`,
         });
       }
     } catch (error) {
-      console.error("Error updating model status:", error);
+      console.error("Error updating prompt status:", error);
       toast({
         title: "Error",
-        description: "Could not update model status. Please try again.",
+        description: "Could not update prompt status. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleDeleteModel = async (id: string) => {
+  const handleDeletePrompt = async (id: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this model? This action cannot be undone.",
+        "Are you sure you want to delete this prompt? This action cannot be undone.",
       )
     ) {
       return;
     }
 
     try {
-      const { success, error } = await deleteAIModel(id);
+      const { success, error } = await deletePrompt(id);
       if (error) throw error;
       if (success) {
-        setModels(models.filter((model) => model.id !== id));
+        setPrompts(prompts.filter((prompt) => prompt.id !== id));
         toast({
-          title: "Model Deleted",
-          description: "The AI model has been deleted successfully.",
+          title: "Prompt Deleted",
+          description: "The prompt has been deleted successfully.",
         });
       }
     } catch (error) {
-      console.error("Error deleting model:", error);
+      console.error("Error deleting prompt:", error);
       toast({
         title: "Error",
-        description: "Could not delete the model. Please try again.",
+        description: "Could not delete the prompt. Please try again.",
         variant: "destructive",
       });
-    }
-  };
-
-  const getProviderLabel = (provider: string) => {
-    switch (provider) {
-      case "openai":
-        return "OpenAI";
-      case "anthropic":
-        return "Anthropic";
-      case "google":
-        return "Google";
-      case "custom":
-        return "Custom";
-      default:
-        return provider;
     }
   };
 
@@ -143,37 +139,48 @@ const AIModelSettings = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">AI Models</h2>
-        <Button onClick={() => navigate("/ai-models/new")}>
+        <h2 className="text-xl font-semibold">AI Prompts</h2>
+        <Button onClick={() => navigate("/prompts/new")}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Model
+          Add Prompt
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Available Models</CardTitle>
+          <CardTitle>Available Prompts</CardTitle>
           <CardDescription>
-            Configure and manage AI models for your application.
+            Configure and manage AI prompts for your application.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex items-center space-x-2 mb-4">
+            <div className="relative flex-1">
+              <Input
+                type="search"
+                placeholder="Search prompts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <span className="ml-2 text-muted-foreground">
-                Loading models...
+                Loading prompts...
               </span>
             </div>
-          ) : models.length === 0 ? (
+          ) : filteredPrompts.length === 0 ? (
             <div className="text-center py-12 border rounded-md bg-muted/10">
-              <p className="text-muted-foreground">No models found.</p>
+              <p className="text-muted-foreground">No prompts found.</p>
               <Button
                 variant="outline"
                 className="mt-4"
-                onClick={() => navigate("/ai-models/new")}
+                onClick={() => navigate("/prompts/new")}
               >
-                Add your first model
+                Add your first prompt
               </Button>
             </div>
           ) : (
@@ -181,35 +188,57 @@ const AIModelSettings = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Provider</TableHead>
-                    <TableHead>Model ID</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {models.map((model) => (
-                    <TableRow key={model.id}>
+                  {filteredPrompts.map((prompt) => (
+                    <TableRow key={prompt.id}>
                       <TableCell>
                         <div className="flex items-center space-x-2">
-                          <Bot className="h-4 w-4 text-primary" />
-                          <span className="font-medium">{model.name}</span>
+                          <MessageSquare className="h-4 w-4 text-primary" />
+                          <span className="font-medium">{prompt.title}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{getProviderLabel(model.provider)}</TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {model.model_id}
+                          {prompt.description || "No description"}
                         </span>
                       </TableCell>
-                      <TableCell>{getStatusBadge(model.status)}</TableCell>
+                      <TableCell>{getStatusBadge(prompt.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
+                          {prompt.status !== "active" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-green-600"
+                              onClick={() =>
+                                handleStatusChange(prompt.id, "active")
+                              }
+                            >
+                              Activate
+                            </Button>
+                          )}
+                          {prompt.status === "active" && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-amber-600"
+                              onClick={() =>
+                                handleStatusChange(prompt.id, "inactive")
+                              }
+                            >
+                              Deactivate
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => navigate(`/ai-models/${model.id}`)}
+                            onClick={() => navigate(`/prompts/${prompt.id}`)}
                           >
                             <Settings className="h-4 w-4" />
                           </Button>
@@ -217,7 +246,7 @@ const AIModelSettings = () => {
                             size="sm"
                             variant="ghost"
                             className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDeleteModel(model.id)}
+                            onClick={() => handleDeletePrompt(prompt.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -235,4 +264,4 @@ const AIModelSettings = () => {
   );
 };
 
-export default AIModelSettings;
+export default PromptManager;

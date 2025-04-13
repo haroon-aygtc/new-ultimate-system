@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Save, Search, FileText } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ const KnowledgeBaseManager: React.FC<KnowledgeBaseManagerProps> = ({
     ai_model_id: activeModelId,
     is_active: true,
   });
+  const { toast } = useToast();
 
   // Fetch knowledge base articles for the active model
   useEffect(() => {

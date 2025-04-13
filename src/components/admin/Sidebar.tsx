@@ -11,6 +11,8 @@ import {
   Bot,
   Globe,
   AlertCircle,
+  Book,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +71,16 @@ const Sidebar = () => {
       icon: <Bot className="h-5 w-5" />,
       label: "AI Models",
       href: "/admin/guest-session-management?tab=ai-settings",
+    },
+    {
+      icon: <Sparkles className="h-5 w-5" />,
+      label: "Prompts",
+      href: "/prompts",
+    },
+    {
+      icon: <Book className="h-5 w-5" />,
+      label: "Knowledge Base",
+      href: "/knowledge-base",
     },
     {
       icon: <Globe className="h-5 w-5" />,
