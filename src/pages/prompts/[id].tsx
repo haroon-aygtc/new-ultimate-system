@@ -491,7 +491,9 @@ const PromptDetail = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <FollowUpQuestionManager promptId={id} />
+                    <FollowUpQuestionManager
+                      activeModelId={prompt.model_id || ""}
+                    />
                   </CardContent>
                 </Card>
 
@@ -503,7 +505,9 @@ const PromptDetail = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <FollowUpQuestionPreview promptId={id} />
+                    <FollowUpQuestionPreview
+                      activeModelId={prompt.model_id || ""}
+                    />
                   </CardContent>
                 </Card>
               </div>

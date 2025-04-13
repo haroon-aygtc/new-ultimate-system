@@ -10,6 +10,7 @@ import {
 import routes from "tempo-routes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
+import { SupabaseProvider } from "./components/SupabaseProvider";
 
 // Lazy load components for better performance
 const Home = lazy(() => import("./pages/Home"));
@@ -224,14 +225,16 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Suspense fallback={<LoadingScreen />}>
-        <>
-          <AppRoutes />
-          {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
-        </>
-      </Suspense>
-    </AuthProvider>
+    <SupabaseProvider>
+      <AuthProvider>
+        <Suspense fallback={<LoadingScreen />}>
+          <>
+            <AppRoutes />
+            {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+          </>
+        </Suspense>
+      </AuthProvider>
+    </SupabaseProvider>
   );
 }
 

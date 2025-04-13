@@ -7,6 +7,7 @@ import ChatWidgetStoryboard from "./ChatWidgetStoryboard";
 import KnowledgeBaseStoryboard from "./KnowledgeBaseStoryboard";
 import PromptStoryboard from "./PromptStoryboard";
 import FollowUpQuestionStoryboard from "./FollowUpQuestionStoryboard";
+import AIConfigurationStoryboard from "./AIConfigurationStoryboard";
 
 export {
   DashboardStoryboard,
@@ -18,4 +19,5 @@ export {
   KnowledgeBaseStoryboard,
   PromptStoryboard,
   FollowUpQuestionStoryboard,
+  AIConfigurationStoryboard,
 };
