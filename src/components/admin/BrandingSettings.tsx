@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,11 +64,14 @@ const BrandingSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [settingsId, setSettingsId] = useState<string | undefined>(undefined);
-  
+
   // Response templates state
-  const [responseTemplates, setResponseTemplates] = useState<ResponseTemplate[]>([]);
+  const [responseTemplates, setResponseTemplates] = useState<
+    ResponseTemplate[]
+  >([]);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
-  const [currentTemplate, setCurrentTemplate] = useState<ResponseTemplate | null>(null);
+  const [currentTemplate, setCurrentTemplate] =
+    useState<ResponseTemplate | null>(null);
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
 
   // Brand appearance settings
@@ -110,9 +113,11 @@ const BrandingSettings = () => {
   const [enableCodeHighlighting, setEnableCodeHighlighting] = useState(true);
   const [enableEmojis, setEnableEmojis] = useState(true);
   const [enableLinkPreview, setEnableLinkPreview] = useState(false);
-  
+
   // AI Persona settings
-  const [aiPersona, setAiPersona] = useState("A helpful AI assistant representing our brand");
+  const [aiPersona, setAiPersona] = useState(
+    "A helpful AI assistant representing our brand",
+  );
   const [aiTone, setAiTone] = useState("friendly");
   const [aiKnowledgeLevel, setAiKnowledgeLevel] = useState("expert");
   const [aiResponseLength, setAiResponseLength] = useState("balanced");
@@ -151,13 +156,16 @@ const BrandingSettings = () => {
           setEnableCodeHighlighting(data.enable_code_highlighting);
           setEnableEmojis(data.enable_emojis);
           setEnableLinkPreview(data.enable_link_preview);
-          
+
           // Load AI persona settings if they exist
           if (data.ai_persona) setAiPersona(data.ai_persona);
           if (data.ai_tone) setAiTone(data.ai_tone);
-          if (data.ai_knowledge_level) setAiKnowledgeLevel(data.ai_knowledge_level);
-          if (data.ai_response_length) setAiResponseLength(data.ai_response_length);
-          if (data.ai_custom_instructions) setAiCustomInstructions(data.ai_custom_instructions);
+          if (data.ai_knowledge_level)
+            setAiKnowledgeLevel(data.ai_knowledge_level);
+          if (data.ai_response_length)
+            setAiResponseLength(data.ai_response_length);
+          if (data.ai_custom_instructions)
+            setAiCustomInstructions(data.ai_custom_instructions);
 
           // Reset unsaved changes flag after loading
           setHasUnsavedChanges(false);
@@ -177,17 +185,17 @@ const BrandingSettings = () => {
     loadSettings();
     loadResponseTemplates();
   }, [toast]);
-  
+
   // Load response templates
   const loadResponseTemplates = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await getResponseTemplates();
-      
+
       if (error) {
         throw error;
       }
-      
+
       if (data) {
         setResponseTemplates(data);
       }
@@ -231,7 +239,7 @@ const BrandingSettings = () => {
     aiTone,
     aiKnowledgeLevel,
     aiResponseLength,
-    aiCustomInstructions
+    aiCustomInstructions,
   ]);
 
   const handleSaveChanges = async () => {
@@ -262,9 +270,15 @@ const BrandingSettings = () => {
         enable_link_preview: enableLinkPreview,
         ai_persona: aiPersona,
         ai_tone: aiTone as "formal" | "casual" | "friendly" | "professional",
-        ai_knowledge_level: aiKnowledgeLevel as "basic" | "intermediate" | "expert",
-        ai_response_length: aiResponseLength as "concise" | "balanced" | "detailed",
-        ai_custom_instructions: aiCustomInstructions
+        ai_knowledge_level: aiKnowledgeLevel as
+          | "basic"
+          | "intermediate"
+          | "expert",
+        ai_response_length: aiResponseLength as
+          | "concise"
+          | "balanced"
+          | "detailed",
+        ai_custom_instructions: aiCustomInstructions,
       };
 
       const { success, error } = await saveBrandingSettings(settings);
@@ -300,7 +314,10 @@ const BrandingSettings = () => {
   };
 
   // Handle message formatting option changes
-  const handleMessageFormattingChange = (option: string, value: boolean) => {
+  const handleMessageFormattingChange = (
+    option: string,
+    value: boolean,
+  ): void => {
     switch (option) {
       case "markdown":
         setEnableMarkdown(value);
@@ -325,34 +342,34 @@ const BrandingSettings = () => {
       name: "",
       description: "",
       template: "",
-      is_active: false
+      is_active: false,
     });
     setIsTemplateDialogOpen(true);
   };
-  
+
   const handleEditTemplate = (template: ResponseTemplate) => {
     setCurrentTemplate(template);
     setIsTemplateDialogOpen(true);
   };
-  
+
   const handleDeleteTemplate = async (id: string) => {
     if (!confirm("Are you sure you want to delete this template?")) {
       return;
     }
-    
+
     setIsTemplateLoading(true);
     try {
       const { success, error } = await deleteResponseTemplate(id);
-      
+
       if (!success) {
         throw error;
       }
-      
+
       toast({
         title: "Template deleted",
-        description: "Response template has been deleted successfully."
+        description: "Response template has been deleted successfully.",
       });
-      
+
       // Refresh templates
       await loadResponseTemplates();
     } catch (error) {
@@ -360,27 +377,27 @@ const BrandingSettings = () => {
       toast({
         title: "Error deleting template",
         description: "Could not delete the template. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsTemplateLoading(false);
     }
   };
-  
+
   const handleSetActiveTemplate = async (id: string) => {
     setIsTemplateLoading(true);
     try {
       const { success, error } = await setTemplateActive(id);
-      
+
       if (!success) {
         throw error;
       }
-      
+
       toast({
         title: "Template activated",
-        description: "Response template has been set as active."
+        description: "Response template has been set as active.",
       });
-      
+
       // Refresh templates
       await loadResponseTemplates();
     } catch (error) {
@@ -388,30 +405,30 @@ const BrandingSettings = () => {
       toast({
         title: "Error activating template",
         description: "Could not set the template as active. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsTemplateLoading(false);
     }
   };
-  
+
   const handleSaveTemplate = async (template: ResponseTemplate) => {
     setIsTemplateLoading(true);
     try {
       const { success, error } = await saveResponseTemplate(template);
-      
+
       if (!success) {
         throw error;
       }
-      
+
       toast({
         title: "Template saved",
-        description: "Response template has been saved successfully."
+        description: "Response template has been saved successfully.",
       });
-      
+
       setIsTemplateDialogOpen(false);
       setCurrentTemplate(null);
-      
+
       // Refresh templates
       await loadResponseTemplates();
     } catch (error) {
@@ -419,7 +436,7 @@ const BrandingSettings = () => {
       toast({
         title: "Error saving template",
         description: "Could not save the template. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsTemplateLoading(false);
@@ -862,11 +879,14 @@ const BrandingSettings = () => {
                       {isLoading ? (
                         <div className="p-6 flex justify-center items-center">
                           <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
-                          <span className="ml-2 text-brand-muted">Loading templates...</span>
+                          <span className="ml-2 text-brand-muted">
+                            Loading templates...
+                          </span>
                         </div>
                       ) : responseTemplates.length === 0 ? (
                         <div className="p-6 text-center text-brand-muted">
-                          No response templates found. Add your first template below.
+                          No response templates found. Add your first template
+                          below.
                         </div>
                       ) : (
                         responseTemplates.map((template) => (
@@ -896,7 +916,9 @@ const BrandingSettings = () => {
                                     variant="ghost"
                                     size="sm"
                                     className="h-7 text-xs text-green-600"
-                                    onClick={() => handleSetActiveTemplate(template.id!)}
+                                    onClick={() =>
+                                      handleSetActiveTemplate(template.id!)
+                                    }
                                   >
                                     <Check className="h-3 w-3 mr-1" />
                                     Set Active
@@ -906,7 +928,9 @@ const BrandingSettings = () => {
                                   variant="ghost"
                                   size="sm"
                                   className="h-7 text-xs text-red-600"
-                                  onClick={() => handleDeleteTemplate(template.id!)}
+                                  onClick={() =>
+                                    handleDeleteTemplate(template.id!)
+                                  }
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
@@ -922,9 +946,9 @@ const BrandingSettings = () => {
                         ))
                       )}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="mt-2"
                       onClick={() => handleAddTemplate()}
                     >
@@ -1050,7 +1074,7 @@ const BrandingSettings = () => {
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="ai-persona" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -1064,35 +1088,36 @@ const BrandingSettings = () => {
                       className="min-h-[100px]"
                     />
                     <p className="text-xs text-brand-muted">
-                      Define how the AI should identify itself and act when interacting with users.
+                      Define how the AI should identify itself and act when
+                      interacting with users.
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="ai-tone">Communication Tone</Label>
-                    <Select 
-                      value={aiTone} 
-                      onValueChange={setAiTone}
-                    >
+                    <Select value={aiTone} onValueChange={setAiTone}>
                       <SelectTrigger id="ai-tone">
                         <SelectValue placeholder="Select tone" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="formal">Formal</SelectItem>
-                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="professional">
+                          Professional
+                        </SelectItem>
                         <SelectItem value="friendly">Friendly</SelectItem>
                         <SelectItem value="casual">Casual</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-brand-muted">
-                      The tone of voice the AI should use when communicating with users.
+                      The tone of voice the AI should use when communicating
+                      with users.
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="ai-knowledge">Knowledge Level</Label>
-                    <Select 
-                      value={aiKnowledgeLevel} 
+                    <Select
+                      value={aiKnowledgeLevel}
                       onValueChange={setAiKnowledgeLevel}
                     >
                       <SelectTrigger id="ai-knowledge">
@@ -1100,7 +1125,9 @@ const BrandingSettings = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="basic">Basic</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
+                        <SelectItem value="intermediate">
+                          Intermediate
+                        </SelectItem>
                         <SelectItem value="expert">Expert</SelectItem>
                       </SelectContent>
                     </Select>
@@ -1108,11 +1135,11 @@ const BrandingSettings = () => {
                       How detailed and technical the AI's responses should be.
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="ai-length">Response Length</Label>
-                    <Select 
-                      value={aiResponseLength} 
+                    <Select
+                      value={aiResponseLength}
                       onValueChange={setAiResponseLength}
                     >
                       <SelectTrigger id="ai-length">
@@ -1129,10 +1156,12 @@ const BrandingSettings = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="ai-custom-instructions">Custom AI Instructions</Label>
+                    <Label htmlFor="ai-custom-instructions">
+                      Custom AI Instructions
+                    </Label>
                     <Textarea
                       id="ai-custom-instructions"
                       value={aiCustomInstructions}
@@ -1141,31 +1170,50 @@ const BrandingSettings = () => {
                       className="min-h-[250px]"
                     />
                     <p className="text-xs text-brand-muted">
-                      Additional instructions for the AI that will be included in every conversation. 
-                      Use this to provide specific guidance on how the AI should represent your brand.
+                      Additional instructions for the AI that will be included
+                      in every conversation. Use this to provide specific
+                      guidance on how the AI should represent your brand.
                     </p>
                   </div>
-                  
+
                   <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mt-4">
                     <div className="flex items-start space-x-2">
                       <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-medium text-amber-800">AI Persona Tips</p>
+                        <p className="font-medium text-amber-800">
+                          AI Persona Tips
+                        </p>
                         <ul className="mt-2 text-sm text-amber-700 space-y-1 list-disc pl-4">
-                          <li>Be specific about how the AI should represent your brand's values</li>
-                          <li>Include key phrases or terminology the AI should use</li>
-                          <li>Specify topics the AI should avoid or emphasize</li>
-                          <li>Define how the AI should handle difficult questions</li>
-                          <li>Consider including examples of ideal responses</li>
+                          <li>
+                            Be specific about how the AI should represent your
+                            brand's values
+                          </li>
+                          <li>
+                            Include key phrases or terminology the AI should use
+                          </li>
+                          <li>
+                            Specify topics the AI should avoid or emphasize
+                          </li>
+                          <li>
+                            Define how the AI should handle difficult questions
+                          </li>
+                          <li>
+                            Consider including examples of ideal responses
+                          </li>
                         </ul>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="bg-gray-50 p-4 rounded-md border mt-4">
-                    <h4 className="font-medium text-sm mb-2">Preview: How your AI will introduce itself</h4>
+                    <h4 className="font-medium text-sm mb-2">
+                      Preview: How your AI will introduce itself
+                    </h4>
                     <div className="p-3 bg-white rounded border text-sm">
-                      <p className="italic text-gray-600">"Hello! I'm {brandName}'s virtual assistant. {aiPersona.split('.')[0]}. How can I help you today?"</p>
+                      <p className="italic text-gray-600">
+                        "Hello! I'm {brandName}'s virtual assistant.{" "}
+                        {aiPersona.split(".")[0]}. How can I help you today?"
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1213,19 +1261,24 @@ const BrandingSettings = () => {
           </div>
         </CardFooter>
       </Card>
-      
+
       {/* Template Dialog */}
-      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+      <Dialog
+        open={isTemplateDialogOpen}
+        onOpenChange={setIsTemplateDialogOpen}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {currentTemplate?.id ? "Edit Response Template" : "Add Response Template"}
+              {currentTemplate?.id
+                ? "Edit Response Template"
+                : "Add Response Template"}
             </DialogTitle>
             <DialogDescription>
               Create or edit a response template for AI-generated messages.
             </DialogDescription>
           </DialogHeader>
-          
+
           {currentTemplate && (
             <div className="space-y-4 py-2">
               <div className="space-y-2">
@@ -1233,71 +1286,94 @@ const BrandingSettings = () => {
                 <Input
                   id="template-name"
                   value={currentTemplate.name}
-                  onChange={(e) => setCurrentTemplate({
-                    ...currentTemplate,
-                    name: e.target.value
-                  })}
+                  onChange={(e) =>
+                    setCurrentTemplate({
+                      ...currentTemplate,
+                      name: e.target.value,
+                    })
+                  }
                   placeholder="e.g., Standard Response"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="template-description">Description</Label>
                 <Input
                   id="template-description"
                   value={currentTemplate.description}
-                  onChange={(e) => setCurrentTemplate({
-                    ...currentTemplate,
-                    description: e.target.value
-                  })}
+                  onChange={(e) =>
+                    setCurrentTemplate({
+                      ...currentTemplate,
+                      description: e.target.value,
+                    })
+                  }
                   placeholder="e.g., Basic response with greeting and answer"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="template-content">Template Content</Label>
                 <div className="flex items-center space-x-2 text-xs text-brand-muted mb-1">
                   <span>Available variables:</span>
-                  <Badge variant="outline" className="font-mono">{{user.name}}</Badge>
-                  <Badge variant="outline" className="font-mono">{{response.content}}</Badge>
-                  <Badge variant="outline" className="font-mono">{{response.sources}}</Badge>
+                  <Badge variant="outline" className="font-mono">
+                    {"{{"}
+                    {"{"}user.name{"}}"}
+                    {"}"}
+                  </Badge>
+                  <Badge variant="outline" className="font-mono">
+                    {"{{"}
+                    {"{"}response.content{"}}"}
+                    {"}"}
+                  </Badge>
+                  <Badge variant="outline" className="font-mono">
+                    {"{{"}
+                    {"{"}response.sources{"}}"}
+                    {"}"}
+                  </Badge>
                 </div>
                 <Textarea
                   id="template-content"
                   value={currentTemplate.template}
-                  onChange={(e) => setCurrentTemplate({
-                    ...currentTemplate,
-                    template: e.target.value
-                  })}
-                  placeholder="Hello {{user.name}},\n\n{{response.content}}\n\nIs there anything else I can help with?"
+                  onChange={(e) =>
+                    setCurrentTemplate({
+                      ...currentTemplate,
+                      template: e.target.value,
+                    })
+                  }
+                  placeholder="Hello {'{{'}{'{'}user.name{'}}'}{'}'},\n\n{'{{'}{'{'}response.content{'}}'}{'}'},\n\nIs there anything else I can help with?"
                   className="min-h-[150px] font-mono text-sm"
                 />
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is-active"
                   checked={currentTemplate.is_active}
-                  onCheckedChange={(checked) => setCurrentTemplate({
-                    ...currentTemplate,
-                    is_active: checked
-                  })}
+                  onCheckedChange={(checked) =>
+                    setCurrentTemplate({
+                      ...currentTemplate,
+                      is_active: checked,
+                    })
+                  }
                 />
                 <Label htmlFor="is-active">Set as active template</Label>
               </div>
-              
+
               <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-sm text-amber-800">
                 <div className="flex items-start space-x-2">
                   <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-medium">Important Note</p>
-                    <p className="mt-1">Only one template can be active at a time. Setting this template as active will deactivate all other templates.</p>
+                    <p className="mt-1">
+                      Only one template can be active at a time. Setting this
+                      template as active will deactivate all other templates.
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -1307,8 +1383,14 @@ const BrandingSettings = () => {
               Cancel
             </Button>
             <Button
-              onClick={() => currentTemplate && handleSaveTemplate(currentTemplate)}
-              disabled={isTemplateLoading || !currentTemplate?.name || !currentTemplate?.template}
+              onClick={() =>
+                currentTemplate && handleSaveTemplate(currentTemplate)
+              }
+              disabled={
+                isTemplateLoading ||
+                !currentTemplate?.name ||
+                !currentTemplate?.template
+              }
               className="bg-brand-primary text-white"
             >
               {isTemplateLoading ? (
@@ -1329,8 +1411,12 @@ const BrandingSettings = () => {
 
 export default BrandingSettings;
 
+interface IconProps {
+  className?: string;
+}
+
 // Helper component for the Send icon
-const Send = ({ className }: { className?: string }) => (
+const Send: React.FC<IconProps> = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -1347,7 +1433,7 @@ const Send = ({ className }: { className?: string }) => (
 );
 
 // Helper component for the X icon
-const X = ({ className }: { className?: string }) => (
+const X: React.FC<IconProps> = ({ className }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
