@@ -68,7 +68,7 @@ const GuestSessionManagement = () => {
               onValueChange={handleTabChange}
               className="space-y-4"
             >
-              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
+              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="ai-settings">AI Models</TabsTrigger>
                 <TabsTrigger value="prompts">Prompts & Follow-ups</TabsTrigger>
@@ -77,7 +77,7 @@ const GuestSessionManagement = () => {
                   Branding & Response Format
                 </TabsTrigger>
                 <TabsTrigger value="user-management">
-                  User & Role Management
+                  User Management
                 </TabsTrigger>
               </TabsList>
 
