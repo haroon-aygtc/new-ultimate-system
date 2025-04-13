@@ -8,6 +8,9 @@ import KnowledgeBaseStoryboard from "./KnowledgeBaseStoryboard";
 import PromptStoryboard from "./PromptStoryboard";
 import FollowUpQuestionStoryboard from "./FollowUpQuestionStoryboard";
 import AIConfigurationStoryboard from "./AIConfigurationStoryboard";
+import PromptTemplatingStoryboard from "./PromptTemplatingStoryboard";
+import BrandingAIIntegrationStoryboard from "./BrandingAIIntegrationStoryboard";
+import KnowledgeBaseAIIntegrationStoryboard from "./KnowledgeBaseAIIntegrationStoryboard";
 
 export {
   DashboardStoryboard,
@@ -20,4 +23,7 @@ export {
   PromptStoryboard,
   FollowUpQuestionStoryboard,
   AIConfigurationStoryboard,
+  PromptTemplatingStoryboard,
+  BrandingAIIntegrationStoryboard,
+  KnowledgeBaseAIIntegrationStoryboard,
 };

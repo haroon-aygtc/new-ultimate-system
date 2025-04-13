@@ -97,17 +97,17 @@ const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
     autoOpen: ${config.autoOpen},
     hideOnMobile: ${config.hideOnMobile},
     loadDelay: ${config.loadDelay},
-    welcomeMessage: '${config.welcomeMessage.replace(/'/g, "\\'")}',
-    offlineMessage: '${config.offlineMessage.replace(/'/g, "\\'")}',
-    inputPlaceholder: '${config.inputPlaceholder.replace(/'/g, "\\'")}',
+    welcomeMessage: '${config.welcomeMessage.replace(/'/g, "\\'")}',,
+    offlineMessage: '${config.offlineMessage.replace(/'/g, "\\'")}',,
+    inputPlaceholder: '${config.inputPlaceholder.replace(/'/g, "\\'")}',,
     showBranding: ${config.showBranding},
     allowAttachments: ${config.allowAttachments},
     enableHistory: ${config.enableHistory},
     apiEndpoint: '${config.domain}/api/chat',
-    sessionTimeout: 30,
-    requireRegistration: true,
-    registrationFields: ['name', 'phone'],
-    enableAnalytics: true
+    sessionTimeout: ${config.sessionTimeout},
+    requireRegistration: ${config.requireRegistration},
+    registrationFields: ${JSON.stringify(config.registrationFields)},
+    enableAnalytics: ${config.enableAnalytics}
   }));
 </script>`;
   };
@@ -165,8 +165,8 @@ const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
   position="${config.position}"
   primary-color="${config.primaryColor}"
   title="${config.title}"
-  auto-open="${config.autoOpen ? "true" : ""}"
-  hide-on-mobile="${config.hideOnMobile ? "true" : ""}"
+  ${config.autoOpen ? "auto-open" : ""}
+  ${config.hideOnMobile ? "hide-on-mobile" : ""}
   load-delay="${config.loadDelay}"
   welcome-message="${config.welcomeMessage.replace(/"/g, "&quot;")}"
   offline-message="${config.offlineMessage.replace(/"/g, "&quot;")}"
@@ -174,11 +174,6 @@ const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
   ${config.showBranding ? "show-branding" : ""}
   ${config.allowAttachments ? "allow-attachments" : ""}
   ${config.enableHistory ? "enable-history" : ""}
-  api-endpoint="${config.domain}/api/chat"
-  session-timeout="30"
-  require-registration="true"
-  registration-fields="name,phone"
-  enable-analytics="true"
 ></guestapp-chat>`;
   };
 
@@ -203,13 +198,10 @@ import { GuestAppChat } from 'guestapp-chat-widget';
   showBranding={${config.showBranding}}
   allowAttachments={${config.allowAttachments}}
   enableHistory={${config.enableHistory}}
-  apiEndpoint="${config.domain}/api/chat"
-  sessionTimeout={30}
-  requireRegistration={true}
-  registrationFields={['name', 'phone']}
-  enableAnalytics={true}
-  onMessage={(message) => console.log('New message:', message)}
-  onSessionStart={(session) => console.log('Session started:', session)}
+  requireRegistration={${config.requireRegistration}}
+  registrationFields={${JSON.stringify(config.registrationFields)}}
+  enableAnalytics={${config.enableAnalytics}}
+  sessionTimeout={${config.sessionTimeout}}
 />`;
   };
 
@@ -231,7 +223,7 @@ import { GuestAppChat } from 'guestapp-chat-widget';
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Embed Code Generator</CardTitle>
+        <CardTitle>Chat Widget Embed Code Generator</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">

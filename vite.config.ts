@@ -24,7 +24,9 @@ export default defineConfig({
     },
   },
   server: {
-    // @ts-ignore
     allowedHosts: true,
+    hmr: {
+      overlay: false, // ✅ disables the red error overlay in dev
+    },
   },
 });

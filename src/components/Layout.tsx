@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Home, User, LogOut, Menu, X, Search } from "lucide-react";
 import Sidebar from "@/components/admin/Sidebar";
 import { Input } from "@/components/ui/input";
+import LoginButton from "@/components/LoginButton";
 
 interface LayoutProps {
   children: ReactNode;
@@ -94,12 +95,7 @@ export default function Layout({ children, showSidebar = false }: LayoutProps) {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/login">
-                      <User className="h-4 w-4 mr-2" />
-                      Login
-                    </Link>
-                  </Button>
+                  <LoginButton variant="outline" size="sm" />
                   <Button size="sm" asChild>
                     <Link to="/register">Register</Link>
                   </Button>
@@ -188,16 +184,12 @@ export default function Layout({ children, showSidebar = false }: LayoutProps) {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Button
+                  <LoginButton
                     variant="outline"
                     size="sm"
-                    asChild
                     className="w-full"
-                  >
-                    <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                      Login
-                    </Link>
-                  </Button>
+                    onClick={() => setMobileMenuOpen(false)}
+                  />
                   <Button size="sm" asChild className="w-full">
                     <Link
                       to="/register"

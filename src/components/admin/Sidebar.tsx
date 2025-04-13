@@ -59,6 +59,26 @@ const Sidebar = () => {
       href: "/admin/guest-session-management",
     },
     {
+      icon: <Bot className="h-5 w-5" />,
+      label: "AI Integration",
+      href: "/admin/guest-session-management?tab=ai-settings",
+    },
+    {
+      icon: <Sparkles className="h-5 w-5" />,
+      label: "Prompts & Follow-ups",
+      href: "/admin/guest-session-management?tab=prompts",
+    },
+    {
+      icon: <Book className="h-5 w-5" />,
+      label: "Knowledge Base Context",
+      href: "/admin/guest-session-management?tab=knowledge-base",
+    },
+    {
+      icon: <PaintBucket className="h-5 w-5" />,
+      label: "Branding & Response Format",
+      href: "/admin/guest-session-management?tab=branding",
+    },
+    {
       icon: <Users className="h-5 w-5" />,
       label: "Guest Sessions",
       href: "/admin/guest-session-management?tab=sessions",
@@ -66,22 +86,7 @@ const Sidebar = () => {
     {
       icon: <MessageSquare className="h-5 w-5" />,
       label: "Chat History",
-      href: "/admin/guest-session-management?tab=sessions",
-    },
-    {
-      icon: <Bot className="h-5 w-5" />,
-      label: "AI Models",
-      href: "/admin/guest-session-management?tab=ai-settings",
-    },
-    {
-      icon: <Sparkles className="h-5 w-5" />,
-      label: "Prompts",
-      href: "/prompts",
-    },
-    {
-      icon: <Book className="h-5 w-5" />,
-      label: "Knowledge Base",
-      href: "/knowledge-base",
+      href: "/admin/guest-session-management?tab=analytics",
     },
     {
       icon: <Globe className="h-5 w-5" />,
@@ -89,23 +94,13 @@ const Sidebar = () => {
       href: "/admin/guest-session-management?tab=scraping",
     },
     {
-      icon: <PaintBucket className="h-5 w-5" />,
-      label: "Branding",
-      href: "/admin/guest-session-management?tab=branding",
-    },
-    {
       icon: <Code className="h-5 w-5" />,
       label: "Embed Code",
       href: "/admin/guest-session-management?tab=embed-code",
     },
     {
-      icon: <Database className="h-5 w-5" />,
-      label: "Knowledge Base",
-      href: "/admin/guest-session-management?tab=ai-settings",
-    },
-    {
       icon: <Users className="h-5 w-5" />,
-      label: "User Management",
+      label: "User & Role Management",
       href: "/admin/guest-session-management?tab=user-management",
     },
     {
@@ -115,7 +110,7 @@ const Sidebar = () => {
     },
     {
       icon: <Settings className="h-5 w-5" />,
-      label: "Settings",
+      label: "System Settings",
       href: "/admin/guest-session-management?tab=system-settings",
     },
   ];
