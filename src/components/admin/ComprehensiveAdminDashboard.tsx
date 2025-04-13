@@ -28,6 +28,7 @@ import DashboardOverview from "@/components/admin/DashboardOverview";
 import AIModelSettings from "@/components/admin/AIModelSettings";
 import UserManagement from "@/components/admin/UserManagement";
 import AuditLogs from "@/components/admin/AuditLogs";
+import { Button } from "@/components/ui/button";
 
 const ComprehensiveAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
