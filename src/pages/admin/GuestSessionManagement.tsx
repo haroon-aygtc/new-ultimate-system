@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import Layout from "@/components/Layout";
@@ -14,6 +15,34 @@ import { motion } from "framer-motion";
 const GuestSessionManagement = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [timeRange, setTimeRange] = useState("week");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Handle URL query parameters for tab selection
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get("tab");
+    if (
+      tabParam &&
+      [
+        "dashboard",
+        "sessions",
+        "analytics",
+        "ai-settings",
+        "branding",
+        "scraping",
+        "logs",
+      ].includes(tabParam)
+    ) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
+
+  // Update URL when tab changes
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    navigate(`/admin/guest-session-management?tab=${value}`, { replace: true });
+  };
 
   return (
     <Layout showSidebar={true}>
@@ -55,7 +84,7 @@ const GuestSessionManagement = () => {
         <Card className="bg-white rounded-lg shadow-sm border-brand-primary/10">
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={handleTabChange}
             className="w-full"
           >
             <div className="border-b">

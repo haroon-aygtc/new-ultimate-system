@@ -9,7 +9,7 @@ import {
   Database,
   FileText,
   Bot,
-  Spider,
+  Globe,
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,52 +46,54 @@ const SidebarItem = ({
 const Sidebar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const searchParams = new URLSearchParams(location.search);
+  const currentTab = searchParams.get("tab");
 
   const menuItems = [
     {
       icon: <LayoutDashboard className="h-5 w-5" />,
       label: "Dashboard",
-      href: "/admin",
+      href: "/admin/guest-session-management",
     },
     {
       icon: <Users className="h-5 w-5" />,
       label: "Guest Sessions",
-      href: "/admin/guest-sessions",
+      href: "/admin/guest-session-management?tab=sessions",
     },
     {
       icon: <MessageSquare className="h-5 w-5" />,
       label: "Chat History",
-      href: "/admin/chat-history",
+      href: "/admin/guest-session-management?tab=sessions",
     },
     {
       icon: <Bot className="h-5 w-5" />,
       label: "AI Models",
-      href: "/admin/ai-models",
+      href: "/admin/guest-session-management?tab=ai-settings",
     },
     {
-      icon: <Spider className="h-5 w-5" />,
+      icon: <Globe className="h-5 w-5" />,
       label: "Scraping System",
-      href: "/admin/scraping",
+      href: "/admin/guest-session-management?tab=scraping",
     },
     {
       icon: <PaintBucket className="h-5 w-5" />,
       label: "Branding",
-      href: "/admin/branding",
+      href: "/admin/guest-session-management?tab=branding",
     },
     {
       icon: <Database className="h-5 w-5" />,
       label: "Knowledge Base",
-      href: "/admin/knowledge-base",
+      href: "/admin/guest-session-management?tab=ai-settings",
     },
     {
       icon: <FileText className="h-5 w-5" />,
       label: "Audit Logs",
-      href: "/admin/audit-logs",
+      href: "/admin/guest-session-management?tab=logs",
     },
     {
       icon: <Settings className="h-5 w-5" />,
       label: "Settings",
-      href: "/admin/settings",
+      href: "/admin/guest-session-management?tab=ai-settings",
     },
   ];
 
@@ -116,7 +118,11 @@ const Sidebar = () => {
             icon={item.icon}
             label={item.label}
             href={item.href}
-            isActive={currentPath === item.href}
+            isActive={
+              item.href.split("?")[0] === currentPath &&
+              (!item.href.includes("?tab=") ||
+                item.href.includes(`?tab=${currentTab}`))
+            }
           />
         ))}
       </div>

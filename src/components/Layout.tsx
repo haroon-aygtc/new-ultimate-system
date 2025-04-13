@@ -4,12 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Home, User, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
+import Sidebar from "@/components/admin/Sidebar";
 
 interface LayoutProps {
   children: ReactNode;
+  showSidebar?: boolean;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, showSidebar = false }: LayoutProps) {
   const { user, signOut, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -153,8 +155,13 @@ export default function Layout({ children }: LayoutProps) {
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1">{children}</main>
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        {showSidebar && <Sidebar />}
+
+        {/* Main Content */}
+        <main className="flex-1">{children}</main>
+      </div>
 
       {/* Footer */}
       <footer className="border-t py-6 md:py-0 bg-brand-secondary text-white">
