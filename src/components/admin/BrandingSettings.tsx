@@ -20,6 +20,9 @@ import {
   MessageSquare,
   Save,
   AlertCircle,
+  Loader2,
+  Check,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -28,11 +31,45 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  getBrandingSettings,
+  saveBrandingSettings,
+  BrandingSettings as BrandingSettingsType,
+  getResponseTemplates,
+  saveResponseTemplate,
+  deleteResponseTemplate,
+  setTemplateActive,
+  ResponseTemplate,
+} from "@/services/brandingService";
 
 const BrandingSettings = () => {
   const { toast } = useToast();
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [settingsId, setSettingsId] = useState<string | undefined>(undefined);
+  
+  // Response templates state
+  const [responseTemplates, setResponseTemplates] = useState<ResponseTemplate[]>([]);
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [currentTemplate, setCurrentTemplate] = useState<ResponseTemplate | null>(null);
+  const [isTemplateLoading, setIsTemplateLoading] = useState(false);
 
   // Brand appearance settings
   const [primaryColor, setPrimaryColor] = useState("#4A6FA5");
@@ -73,6 +110,98 @@ const BrandingSettings = () => {
   const [enableCodeHighlighting, setEnableCodeHighlighting] = useState(true);
   const [enableEmojis, setEnableEmojis] = useState(true);
   const [enableLinkPreview, setEnableLinkPreview] = useState(false);
+  
+  // AI Persona settings
+  const [aiPersona, setAiPersona] = useState("A helpful AI assistant representing our brand");
+  const [aiTone, setAiTone] = useState("friendly");
+  const [aiKnowledgeLevel, setAiKnowledgeLevel] = useState("expert");
+  const [aiResponseLength, setAiResponseLength] = useState("balanced");
+  const [aiCustomInstructions, setAiCustomInstructions] = useState("");
+
+  // Load settings from database
+  useEffect(() => {
+    const loadSettings = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await getBrandingSettings();
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setSettingsId(data.id);
+          setPrimaryColor(data.primary_color);
+          setSecondaryColor(data.secondary_color);
+          setAccentColor(data.accent_color);
+          setLogoUrl(data.logo_url);
+          setBrandName(data.brand_name);
+          setTagline(data.tagline);
+          setWidgetTitle(data.widget_title);
+          setWelcomeMessage(data.welcome_message);
+          setInputPlaceholder(data.input_placeholder);
+          setWidgetPosition(data.widget_position);
+          setCornerRadius(data.corner_radius);
+          setHeaderOpacity(data.header_opacity);
+          setShowAvatar(data.show_avatar);
+          setOfflineMessage(data.offline_message);
+          setTimeoutMessage(data.timeout_message);
+          setErrorMessage(data.error_message);
+          setEnableMarkdown(data.enable_markdown);
+          setEnableCodeHighlighting(data.enable_code_highlighting);
+          setEnableEmojis(data.enable_emojis);
+          setEnableLinkPreview(data.enable_link_preview);
+          
+          // Load AI persona settings if they exist
+          if (data.ai_persona) setAiPersona(data.ai_persona);
+          if (data.ai_tone) setAiTone(data.ai_tone);
+          if (data.ai_knowledge_level) setAiKnowledgeLevel(data.ai_knowledge_level);
+          if (data.ai_response_length) setAiResponseLength(data.ai_response_length);
+          if (data.ai_custom_instructions) setAiCustomInstructions(data.ai_custom_instructions);
+
+          // Reset unsaved changes flag after loading
+          setHasUnsavedChanges(false);
+        }
+      } catch (error) {
+        console.error("Error loading branding settings:", error);
+        toast({
+          title: "Error loading settings",
+          description: "Could not load branding settings. Using defaults.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+    loadResponseTemplates();
+  }, [toast]);
+  
+  // Load response templates
+  const loadResponseTemplates = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await getResponseTemplates();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        setResponseTemplates(data);
+      }
+    } catch (error) {
+      console.error("Error loading response templates:", error);
+      toast({
+        title: "Error loading templates",
+        description: "Could not load response templates.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Track changes to update the unsaved changes state
   useEffect(() => {
@@ -98,19 +227,67 @@ const BrandingSettings = () => {
     enableCodeHighlighting,
     enableEmojis,
     enableLinkPreview,
+    aiPersona,
+    aiTone,
+    aiKnowledgeLevel,
+    aiResponseLength,
+    aiCustomInstructions
   ]);
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     setIsSaving(true);
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const settings: BrandingSettingsType = {
+        id: settingsId,
+        primary_color: primaryColor,
+        secondary_color: secondaryColor,
+        accent_color: accentColor,
+        logo_url: logoUrl,
+        brand_name: brandName,
+        tagline: tagline,
+        widget_title: widgetTitle,
+        welcome_message: welcomeMessage,
+        input_placeholder: inputPlaceholder,
+        widget_position: widgetPosition as "bottom-right" | "bottom-left",
+        corner_radius: cornerRadius,
+        header_opacity: headerOpacity,
+        show_avatar: showAvatar,
+        offline_message: offlineMessage,
+        timeout_message: timeoutMessage,
+        error_message: errorMessage,
+        enable_markdown: enableMarkdown,
+        enable_code_highlighting: enableCodeHighlighting,
+        enable_emojis: enableEmojis,
+        enable_link_preview: enableLinkPreview,
+        ai_persona: aiPersona,
+        ai_tone: aiTone as "formal" | "casual" | "friendly" | "professional",
+        ai_knowledge_level: aiKnowledgeLevel as "basic" | "intermediate" | "expert",
+        ai_response_length: aiResponseLength as "concise" | "balanced" | "detailed",
+        ai_custom_instructions: aiCustomInstructions
+      };
+
+      const { success, error } = await saveBrandingSettings(settings);
+
+      if (!success) {
+        throw error;
+      }
+
       toast({
         title: "Settings saved",
         description: "Your branding settings have been updated successfully.",
       });
       setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error("Error saving branding settings:", error);
+      toast({
+        title: "Error saving settings",
+        description: "Could not save branding settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsSaving(false);
-    }, 1000);
+    }
   };
 
   const handleLogoUpload = () => {
@@ -142,8 +319,121 @@ const BrandingSettings = () => {
     }
   };
 
+  // Template management functions
+  const handleAddTemplate = () => {
+    setCurrentTemplate({
+      name: "",
+      description: "",
+      template: "",
+      is_active: false
+    });
+    setIsTemplateDialogOpen(true);
+  };
+  
+  const handleEditTemplate = (template: ResponseTemplate) => {
+    setCurrentTemplate(template);
+    setIsTemplateDialogOpen(true);
+  };
+  
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this template?")) {
+      return;
+    }
+    
+    setIsTemplateLoading(true);
+    try {
+      const { success, error } = await deleteResponseTemplate(id);
+      
+      if (!success) {
+        throw error;
+      }
+      
+      toast({
+        title: "Template deleted",
+        description: "Response template has been deleted successfully."
+      });
+      
+      // Refresh templates
+      await loadResponseTemplates();
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      toast({
+        title: "Error deleting template",
+        description: "Could not delete the template. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTemplateLoading(false);
+    }
+  };
+  
+  const handleSetActiveTemplate = async (id: string) => {
+    setIsTemplateLoading(true);
+    try {
+      const { success, error } = await setTemplateActive(id);
+      
+      if (!success) {
+        throw error;
+      }
+      
+      toast({
+        title: "Template activated",
+        description: "Response template has been set as active."
+      });
+      
+      // Refresh templates
+      await loadResponseTemplates();
+    } catch (error) {
+      console.error("Error activating template:", error);
+      toast({
+        title: "Error activating template",
+        description: "Could not set the template as active. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTemplateLoading(false);
+    }
+  };
+  
+  const handleSaveTemplate = async (template: ResponseTemplate) => {
+    setIsTemplateLoading(true);
+    try {
+      const { success, error } = await saveResponseTemplate(template);
+      
+      if (!success) {
+        throw error;
+      }
+      
+      toast({
+        title: "Template saved",
+        description: "Response template has been saved successfully."
+      });
+      
+      setIsTemplateDialogOpen(false);
+      setCurrentTemplate(null);
+      
+      // Refresh templates
+      await loadResponseTemplates();
+    } catch (error) {
+      console.error("Error saving template:", error);
+      toast({
+        title: "Error saving template",
+        description: "Could not save the template. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsTemplateLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {isLoading && (
+        <div className="flex justify-center items-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+          <span className="ml-2 text-brand-muted">Loading settings...</span>
+        </div>
+      )}
       <Card className="bg-white border-brand-primary/10">
         <CardHeader>
           <CardTitle className="text-brand-secondary">
@@ -159,6 +449,7 @@ const BrandingSettings = () => {
               <TabsTrigger value="appearance">Appearance</TabsTrigger>
               <TabsTrigger value="widget">Widget</TabsTrigger>
               <TabsTrigger value="messages">Messages</TabsTrigger>
+              <TabsTrigger value="ai-persona">AI Persona</TabsTrigger>
             </TabsList>
 
             <TabsContent value="appearance" className="space-y-6">
@@ -565,50 +856,78 @@ const BrandingSettings = () => {
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium">
-                      Response Templates
+                      Response Format Templates
                     </Label>
                     <div className="mt-2 border rounded-md divide-y">
-                      {[
-                        {
-                          name: "Greeting",
-                          content: "Hello {{name}}, how can I help you today?",
-                        },
-                        {
-                          name: "Thank You",
-                          content:
-                            "Thank you for contacting us. Is there anything else you need help with?",
-                        },
-                        {
-                          name: "Closing",
-                          content:
-                            "Thank you for chatting with us. Have a great day!",
-                        },
-                        {
-                          name: "Transfer",
-                          content:
-                            "I'll transfer you to a specialist who can better assist with your question.",
-                        },
-                      ].map((template, index) => (
-                        <div key={index} className="p-3">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm">
-                              {template.name}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs"
-                            >
-                              Edit
-                            </Button>
-                          </div>
-                          <p className="text-xs text-brand-muted mt-1 line-clamp-1">
-                            {template.content}
-                          </p>
+                      {isLoading ? (
+                        <div className="p-6 flex justify-center items-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
+                          <span className="ml-2 text-brand-muted">Loading templates...</span>
                         </div>
-                      ))}
+                      ) : responseTemplates.length === 0 ? (
+                        <div className="p-6 text-center text-brand-muted">
+                          No response templates found. Add your first template below.
+                        </div>
+                      ) : (
+                        responseTemplates.map((template) => (
+                          <div key={template.id} className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-sm">
+                                  {template.name}
+                                </span>
+                                {template.is_active && (
+                                  <Badge className="bg-green-100 text-green-800 text-xs">
+                                    Active
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => handleEditTemplate(template)}
+                                >
+                                  Edit
+                                </Button>
+                                {!template.is_active && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 text-xs text-green-600"
+                                    onClick={() => handleSetActiveTemplate(template.id!)}
+                                  >
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Set Active
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs text-red-600"
+                                  onClick={() => handleDeleteTemplate(template.id!)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            <p className="text-xs text-brand-muted mt-1">
+                              {template.description}
+                            </p>
+                            <div className="mt-2 bg-gray-50 p-2 rounded text-xs font-mono whitespace-pre-line line-clamp-2">
+                              {template.template}
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
-                    <Button variant="outline" size="sm" className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => handleAddTemplate()}
+                    >
                       Add Template
                     </Button>
                   </div>
@@ -731,6 +1050,127 @@ const BrandingSettings = () => {
                 </div>
               </div>
             </TabsContent>
+            
+            <TabsContent value="ai-persona" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ai-persona">AI Persona Description</Label>
+                    <Textarea
+                      id="ai-persona"
+                      value={aiPersona}
+                      onChange={(e) => setAiPersona(e.target.value)}
+                      placeholder="Describe how the AI should present itself"
+                      className="min-h-[100px]"
+                    />
+                    <p className="text-xs text-brand-muted">
+                      Define how the AI should identify itself and act when interacting with users.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="ai-tone">Communication Tone</Label>
+                    <Select 
+                      value={aiTone} 
+                      onValueChange={setAiTone}
+                    >
+                      <SelectTrigger id="ai-tone">
+                        <SelectValue placeholder="Select tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="formal">Formal</SelectItem>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="friendly">Friendly</SelectItem>
+                        <SelectItem value="casual">Casual</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-brand-muted">
+                      The tone of voice the AI should use when communicating with users.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="ai-knowledge">Knowledge Level</Label>
+                    <Select 
+                      value={aiKnowledgeLevel} 
+                      onValueChange={setAiKnowledgeLevel}
+                    >
+                      <SelectTrigger id="ai-knowledge">
+                        <SelectValue placeholder="Select knowledge level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="basic">Basic</SelectItem>
+                        <SelectItem value="intermediate">Intermediate</SelectItem>
+                        <SelectItem value="expert">Expert</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-brand-muted">
+                      How detailed and technical the AI's responses should be.
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="ai-length">Response Length</Label>
+                    <Select 
+                      value={aiResponseLength} 
+                      onValueChange={setAiResponseLength}
+                    >
+                      <SelectTrigger id="ai-length">
+                        <SelectValue placeholder="Select response length" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="concise">Concise</SelectItem>
+                        <SelectItem value="balanced">Balanced</SelectItem>
+                        <SelectItem value="detailed">Detailed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-brand-muted">
+                      How verbose the AI should be in its responses.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ai-custom-instructions">Custom AI Instructions</Label>
+                    <Textarea
+                      id="ai-custom-instructions"
+                      value={aiCustomInstructions}
+                      onChange={(e) => setAiCustomInstructions(e.target.value)}
+                      placeholder="Add any specific instructions for how the AI should behave"
+                      className="min-h-[250px]"
+                    />
+                    <p className="text-xs text-brand-muted">
+                      Additional instructions for the AI that will be included in every conversation. 
+                      Use this to provide specific guidance on how the AI should represent your brand.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mt-4">
+                    <div className="flex items-start space-x-2">
+                      <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-amber-800">AI Persona Tips</p>
+                        <ul className="mt-2 text-sm text-amber-700 space-y-1 list-disc pl-4">
+                          <li>Be specific about how the AI should represent your brand's values</li>
+                          <li>Include key phrases or terminology the AI should use</li>
+                          <li>Specify topics the AI should avoid or emphasize</li>
+                          <li>Define how the AI should handle difficult questions</li>
+                          <li>Consider including examples of ideal responses</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gray-50 p-4 rounded-md border mt-4">
+                    <h4 className="font-medium text-sm mb-2">Preview: How your AI will introduce itself</h4>
+                    <div className="p-3 bg-white rounded border text-sm">
+                      <p className="italic text-gray-600">"Hello! I'm {brandName}'s virtual assistant. {aiPersona.split('.')[0]}. How can I help you today?"</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between space-x-2 border-t pt-4">
@@ -773,6 +1213,116 @@ const BrandingSettings = () => {
           </div>
         </CardFooter>
       </Card>
+      
+      {/* Template Dialog */}
+      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {currentTemplate?.id ? "Edit Response Template" : "Add Response Template"}
+            </DialogTitle>
+            <DialogDescription>
+              Create or edit a response template for AI-generated messages.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {currentTemplate && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="template-name">Template Name</Label>
+                <Input
+                  id="template-name"
+                  value={currentTemplate.name}
+                  onChange={(e) => setCurrentTemplate({
+                    ...currentTemplate,
+                    name: e.target.value
+                  })}
+                  placeholder="e.g., Standard Response"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="template-description">Description</Label>
+                <Input
+                  id="template-description"
+                  value={currentTemplate.description}
+                  onChange={(e) => setCurrentTemplate({
+                    ...currentTemplate,
+                    description: e.target.value
+                  })}
+                  placeholder="e.g., Basic response with greeting and answer"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="template-content">Template Content</Label>
+                <div className="flex items-center space-x-2 text-xs text-brand-muted mb-1">
+                  <span>Available variables:</span>
+                  <Badge variant="outline" className="font-mono">{{user.name}}</Badge>
+                  <Badge variant="outline" className="font-mono">{{response.content}}</Badge>
+                  <Badge variant="outline" className="font-mono">{{response.sources}}</Badge>
+                </div>
+                <Textarea
+                  id="template-content"
+                  value={currentTemplate.template}
+                  onChange={(e) => setCurrentTemplate({
+                    ...currentTemplate,
+                    template: e.target.value
+                  })}
+                  placeholder="Hello {{user.name}},\n\n{{response.content}}\n\nIs there anything else I can help with?"
+                  className="min-h-[150px] font-mono text-sm"
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is-active"
+                  checked={currentTemplate.is_active}
+                  onCheckedChange={(checked) => setCurrentTemplate({
+                    ...currentTemplate,
+                    is_active: checked
+                  })}
+                />
+                <Label htmlFor="is-active">Set as active template</Label>
+              </div>
+              
+              <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-sm text-amber-800">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium">Important Note</p>
+                    <p className="mt-1">Only one template can be active at a time. Setting this template as active will deactivate all other templates.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsTemplateDialogOpen(false)}
+              disabled={isTemplateLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => currentTemplate && handleSaveTemplate(currentTemplate)}
+              disabled={isTemplateLoading || !currentTemplate?.name || !currentTemplate?.template}
+              className="bg-brand-primary text-white"
+            >
+              {isTemplateLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : (
+                "Save Template"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
