@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -23,8 +24,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { UserPlus } from "lucide-react";
+import { UserPlus, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
+import { motion } from "framer-motion";
 
 const formSchema = z
   .object({
@@ -33,6 +35,9 @@ const formSchema = z
     confirmPassword: z
       .string()
       .min(6, "Password must be at least 6 characters"),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message: "You must accept the terms and conditions",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -52,6 +57,7 @@ export default function Register() {
       email: "",
       password: "",
       confirmPassword: "",
+      acceptTerms: false,
     },
   });
 
@@ -88,7 +94,12 @@ export default function Register() {
 
   return (
     <Layout>
-      <div className="container max-w-md mx-auto py-10">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="container max-w-md mx-auto py-10"
+      >
         <Card className="border-brand-muted/20 shadow-lg bg-white">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center text-brand-secondary">
@@ -101,6 +112,7 @@ export default function Register() {
           <CardContent>
             {error && (
               <Alert className="mb-4 border-destructive/50 text-destructive">
+                <AlertCircle className="h-4 w-4 mr-2" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -118,6 +130,8 @@ export default function Register() {
                       <FormControl>
                         <Input
                           placeholder="your.email@example.com"
+                          type="email"
+                          autoComplete="email"
                           {...field}
                           disabled={isLoading}
                           className="border-brand-muted/30 focus-visible:ring-brand-primary"
@@ -137,6 +151,7 @@ export default function Register() {
                         <Input
                           type="password"
                           placeholder="••••••••"
+                          autoComplete="new-password"
                           {...field}
                           disabled={isLoading}
                           className="border-brand-muted/30 focus-visible:ring-brand-primary"
@@ -156,12 +171,39 @@ export default function Register() {
                         <Input
                           type="password"
                           placeholder="••••••••"
+                          autoComplete="new-password"
                           {...field}
                           disabled={isLoading}
                           className="border-brand-muted/30 focus-visible:ring-brand-primary"
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="acceptTerms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-4 border">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          I accept the{" "}
+                          <Link
+                            to="/terms"
+                            className="text-brand-primary hover:underline"
+                          >
+                            terms and conditions
+                          </Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
                     </FormItem>
                   )}
                 />
@@ -194,7 +236,7 @@ export default function Register() {
             </div>
           </CardFooter>
         </Card>
-      </div>
+      </motion.div>
     </Layout>
   );
 }

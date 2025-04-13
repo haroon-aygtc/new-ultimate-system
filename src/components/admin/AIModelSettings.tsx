@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,155 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertCircle, Check, Info, Save, Settings, Trash2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const AIModelSettings = () => {
   const [activeModel, setActiveModel] = useState("gpt-4");
   const [customPrompt, setCustomPrompt] = useState(
     "You are a helpful assistant for our company. Please provide accurate and concise information to our customers.",
   );
+  const [temperature, setTemperature] = useState(0.7);
+  const [maxTokens, setMaxTokens] = useState(1024);
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [currentModelConfig, setCurrentModelConfig] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Model configurations
+  const [models, setModels] = useState([
+    {
+      id: "gpt-4",
+      name: "GPT-4",
+      description: "Most powerful model for complex tasks",
+      status: "Active",
+      config: {
+        temperature: 0.7,
+        maxTokens: 2048,
+        topP: 1,
+        frequencyPenalty: 0,
+        presencePenalty: 0,
+      },
+    },
+    {
+      id: "gpt-3.5-turbo",
+      name: "GPT-3.5 Turbo",
+      description: "Fast and cost-effective for most use cases",
+      status: "Inactive",
+      config: {
+        temperature: 0.8,
+        maxTokens: 1024,
+        topP: 1,
+        frequencyPenalty: 0,
+        presencePenalty: 0,
+      },
+    },
+    {
+      id: "claude-2",
+      name: "Claude 2",
+      description: "Alternative model with different strengths",
+      status: "Static",
+      config: {
+        temperature: 0.5,
+        maxTokens: 1536,
+        topP: 0.9,
+        frequencyPenalty: 0.1,
+        presencePenalty: 0.1,
+      },
+    },
+  ]);
+
+  // Update temperature and maxTokens when active model changes
+  useEffect(() => {
+    const model = models.find((m) => m.id === activeModel);
+    if (model) {
+      setTemperature(model.config.temperature);
+      setMaxTokens(model.config.maxTokens);
+    }
+  }, [activeModel, models]);
+
+  // Handle model status change
+  const handleStatusChange = (modelId, newStatus) => {
+    setModels(
+      models.map((model) =>
+        model.id === modelId ? { ...model, status: newStatus } : model,
+      ),
+    );
+    setHasChanges(true);
+    toast({
+      title: "Model status updated",
+      description: `${models.find((m) => m.id === modelId)?.name} is now ${newStatus}`,
+    });
+  };
+
+  // Open configuration dialog for a model
+  const openConfigDialog = (modelId) => {
+    const model = models.find((m) => m.id === modelId);
+    setCurrentModelConfig({ ...model });
+    setShowConfigDialog(true);
+  };
+
+  // Save model configuration
+  const saveModelConfig = () => {
+    if (!currentModelConfig) return;
+
+    setModels(
+      models.map((model) =>
+        model.id === currentModelConfig.id ? { ...currentModelConfig } : model,
+      ),
+    );
+
+    if (currentModelConfig.id === activeModel) {
+      setTemperature(currentModelConfig.config.temperature);
+      setMaxTokens(currentModelConfig.config.maxTokens);
+    }
+
+    setShowConfigDialog(false);
+    setHasChanges(true);
+    toast({
+      title: "Configuration saved",
+      description: `${currentModelConfig.name} configuration has been updated`,
+    });
+  };
+
+  // Save all changes
+  const saveAllChanges = () => {
+    setIsLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false);
+      setHasChanges(false);
+      toast({
+        title: "Changes saved successfully",
+        description: "All AI model configurations have been updated",
+      });
+    }, 1000);
+  };
+
+  // Reset to defaults
+  const resetToDefaults = () => {
+    // Implementation would reset to original values
+    toast({
+      title: "Reset to defaults",
+      description: "All settings have been reset to their default values",
+      variant: "destructive",
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -71,37 +214,90 @@ const AIModelSettings = () => {
                 ].map((model) => (
                   <Card
                     key={model.id}
-                    className={`border ${activeModel === model.id ? "border-brand-primary" : "border-muted"}`}
+                    className={`border transition-all duration-200 ${activeModel === model.id ? "border-brand-primary shadow-md" : "border-muted hover:border-brand-primary/50"}`}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-center">
-                        <CardTitle className="text-base">
+                        <CardTitle className="text-base flex items-center">
                           {model.name}
+                          {activeModel === model.id && (
+                            <Badge className="ml-2 bg-brand-primary text-white text-xs">
+                              Active
+                            </Badge>
+                          )}
                         </CardTitle>
-                        <Badge
-                          variant="outline"
-                          className={
-                            model.status === "Active"
-                              ? "bg-brand-accent/20 text-brand-accent"
-                              : model.status === "Inactive"
-                                ? "bg-brand-muted/20 text-brand-muted"
-                                : "bg-yellow-100 text-yellow-800"
-                          }
-                        >
-                          {model.status}
-                        </Badge>
+                        <div className="flex items-center space-x-2">
+                          <Select
+                            value={model.status}
+                            onValueChange={(value) =>
+                              handleStatusChange(model.id, value)
+                            }
+                          >
+                            <SelectTrigger className="w-[110px] h-7 text-xs">
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem
+                                value="Active"
+                                className="text-brand-accent"
+                              >
+                                <span className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-brand-accent mr-2"></span>
+                                  Active
+                                </span>
+                              </SelectItem>
+                              <SelectItem
+                                value="Inactive"
+                                className="text-brand-muted"
+                              >
+                                <span className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-brand-muted mr-2"></span>
+                                  Inactive
+                                </span>
+                              </SelectItem>
+                              <SelectItem
+                                value="Static"
+                                className="text-yellow-600"
+                              >
+                                <span className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-yellow-400 mr-2"></span>
+                                  Static
+                                </span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <CardDescription className="text-xs">
                         {model.description}
                       </CardDescription>
                     </CardHeader>
+                    <CardContent className="pb-2 pt-0">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="text-xs">
+                          <span className="text-brand-muted">Temperature:</span>{" "}
+                          {model.config.temperature}
+                        </div>
+                        <div className="text-xs">
+                          <span className="text-brand-muted">Max Tokens:</span>{" "}
+                          {model.config.maxTokens}
+                        </div>
+                      </div>
+                    </CardContent>
                     <CardFooter className="pt-2">
                       <div className="flex justify-between items-center w-full">
                         <div className="flex items-center space-x-2">
                           <Switch
                             id={`${model.id}-switch`}
                             checked={activeModel === model.id}
-                            onCheckedChange={() => setActiveModel(model.id)}
+                            onCheckedChange={() => {
+                              setActiveModel(model.id);
+                              setHasChanges(true);
+                              toast({
+                                title: "Model selected",
+                                description: `${model.name} is now the active model`,
+                              });
+                            }}
                           />
                           <Label
                             htmlFor={`${model.id}-switch`}
@@ -113,8 +309,10 @@ const AIModelSettings = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-xs h-7"
+                          className="text-xs h-7 flex items-center"
+                          onClick={() => openConfigDialog(model.id)}
                         >
+                          <Settings className="h-3 w-3 mr-1" />
                           Configure
                         </Button>
                       </div>
@@ -127,7 +325,12 @@ const AIModelSettings = () => {
                 <h3 className="text-sm font-medium mb-2">Model Parameters</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="temperature">Temperature</Label>
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="temperature">Temperature</Label>
+                      <span className="text-sm font-medium bg-brand-light px-2 py-1 rounded">
+                        {temperature}
+                      </span>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <Input
                         id="temperature"
@@ -135,23 +338,60 @@ const AIModelSettings = () => {
                         min="0"
                         max="2"
                         step="0.1"
-                        defaultValue="0.7"
+                        value={temperature}
+                        onChange={(e) => {
+                          setTemperature(parseFloat(e.target.value));
+                          setHasChanges(true);
+                        }}
                         className="w-full"
                       />
-                      <span className="text-sm w-8">0.7</span>
                     </div>
-                    <p className="text-xs text-brand-muted">
+                    <div className="flex justify-between text-xs text-brand-muted">
+                      <span>Precise (0)</span>
+                      <span>Balanced (1)</span>
+                      <span>Creative (2)</span>
+                    </div>
+                    <p className="text-xs text-brand-muted mt-1">
+                      <Info className="inline h-3 w-3 mr-1" />
                       Controls randomness: Lower values are more deterministic,
                       higher values more creative
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="max-tokens">Max Tokens</Label>
-                    <Input id="max-tokens" type="number" defaultValue="1024" />
-                    <p className="text-xs text-brand-muted">
-                      Maximum number of tokens to generate in the response
-                    </p>
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="max-tokens">Max Tokens</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-brand-muted cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="w-[200px] text-xs">
+                              Tokens are pieces of words. 1,000 tokens is about
+                              750 words.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Input
+                      id="max-tokens"
+                      type="number"
+                      value={maxTokens}
+                      onChange={(e) => {
+                        setMaxTokens(parseInt(e.target.value));
+                        setHasChanges(true);
+                      }}
+                    />
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-brand-muted">
+                        Maximum length of generated responses
+                      </p>
+                      <Badge variant="outline" className="text-xs">
+                        ~{Math.round(maxTokens * 0.75)} words
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -363,12 +603,221 @@ const AIModelSettings = () => {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="flex justify-end space-x-2 border-t pt-4">
-          <Button variant="outline">Reset to Defaults</Button>
-          <Button className="bg-brand-primary text-white">
-            Save Configuration
-          </Button>
+        <CardFooter className="flex justify-between space-x-2 border-t pt-4">
+          <div>
+            {hasChanges && (
+              <Badge
+                variant="outline"
+                className="bg-yellow-50 text-yellow-800 border-yellow-300"
+              >
+                <AlertCircle className="h-3 w-3 mr-1" />
+                Unsaved changes
+              </Badge>
+            )}
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              onClick={resetToDefaults}
+              disabled={isLoading}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Reset to Defaults
+            </Button>
+            <Button
+              className="bg-brand-primary text-white"
+              onClick={saveAllChanges}
+              disabled={!hasChanges || isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Saving...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Configuration
+                </span>
+              )}
+            </Button>
+          </div>
         </CardFooter>
+
+        {/* Model Configuration Dialog */}
+        <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Configure {currentModelConfig?.name}</DialogTitle>
+              <DialogDescription>
+                Adjust the parameters for this AI model. These settings will
+                affect how the model generates responses.
+              </DialogDescription>
+            </DialogHeader>
+
+            {currentModelConfig && (
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="model-temperature">Temperature</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="model-temperature"
+                      type="range"
+                      min="0"
+                      max="2"
+                      step="0.1"
+                      value={currentModelConfig.config.temperature}
+                      onChange={(e) =>
+                        setCurrentModelConfig({
+                          ...currentModelConfig,
+                          config: {
+                            ...currentModelConfig.config,
+                            temperature: parseFloat(e.target.value),
+                          },
+                        })
+                      }
+                      className="w-full"
+                    />
+                    <span className="text-sm w-8">
+                      {currentModelConfig.config.temperature}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="model-max-tokens">Max Tokens</Label>
+                  <Input
+                    id="model-max-tokens"
+                    type="number"
+                    value={currentModelConfig.config.maxTokens}
+                    onChange={(e) =>
+                      setCurrentModelConfig({
+                        ...currentModelConfig,
+                        config: {
+                          ...currentModelConfig.config,
+                          maxTokens: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="model-top-p">Top P</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="model-top-p"
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.05"
+                      value={currentModelConfig.config.topP}
+                      onChange={(e) =>
+                        setCurrentModelConfig({
+                          ...currentModelConfig,
+                          config: {
+                            ...currentModelConfig.config,
+                            topP: parseFloat(e.target.value),
+                          },
+                        })
+                      }
+                      className="w-full"
+                    />
+                    <span className="text-sm w-8">
+                      {currentModelConfig.config.topP}
+                    </span>
+                  </div>
+                  <p className="text-xs text-brand-muted">
+                    Controls diversity via nucleus sampling
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="model-frequency-penalty">
+                      Frequency Penalty
+                    </Label>
+                    <Input
+                      id="model-frequency-penalty"
+                      type="number"
+                      min="-2"
+                      max="2"
+                      step="0.1"
+                      value={currentModelConfig.config.frequencyPenalty}
+                      onChange={(e) =>
+                        setCurrentModelConfig({
+                          ...currentModelConfig,
+                          config: {
+                            ...currentModelConfig.config,
+                            frequencyPenalty: parseFloat(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="model-presence-penalty">
+                      Presence Penalty
+                    </Label>
+                    <Input
+                      id="model-presence-penalty"
+                      type="number"
+                      min="-2"
+                      max="2"
+                      step="0.1"
+                      value={currentModelConfig.config.presencePenalty}
+                      onChange={(e) =>
+                        setCurrentModelConfig({
+                          ...currentModelConfig,
+                          config: {
+                            ...currentModelConfig.config,
+                            presencePenalty: parseFloat(e.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowConfigDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={saveModelConfig}
+                className="bg-brand-primary text-white"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Card>
     </div>
   );

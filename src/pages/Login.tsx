@@ -23,8 +23,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LogIn } from "lucide-react";
+import { LogIn, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
+import { motion } from "framer-motion";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -62,7 +63,7 @@ export default function Login() {
       }
 
       if (authData) {
-        navigate("/");
+        navigate("/admin/guest-session-management");
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -74,19 +75,25 @@ export default function Login() {
 
   return (
     <Layout>
-      <div className="container max-w-md mx-auto py-10">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="container max-w-md mx-auto py-10"
+      >
         <Card className="border-brand-muted/20 shadow-lg bg-white">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center text-brand-secondary">
-              Login
+              Welcome Back
             </CardTitle>
             <CardDescription className="text-center text-brand-muted">
-              Enter your credentials to access your account
+              Sign in to access your account
             </CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
               <Alert className="mb-4 border-destructive/50 text-destructive">
+                <AlertCircle className="h-4 w-4 mr-2" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
@@ -104,6 +111,8 @@ export default function Login() {
                       <FormControl>
                         <Input
                           placeholder="your.email@example.com"
+                          type="email"
+                          autoComplete="email"
                           {...field}
                           disabled={isLoading}
                           className="border-brand-muted/30 focus-visible:ring-brand-primary"
@@ -118,11 +127,20 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Password</FormLabel>
+                        <Link
+                          to="/forgot-password"
+                          className="text-xs text-brand-primary hover:underline"
+                        >
+                          Forgot password?
+                        </Link>
+                      </div>
                       <FormControl>
                         <Input
                           type="password"
                           placeholder="••••••••"
+                          autoComplete="current-password"
                           {...field}
                           disabled={isLoading}
                           className="border-brand-muted/30 focus-visible:ring-brand-primary"
@@ -134,18 +152,18 @@ export default function Login() {
                 />
                 <Button
                   type="submit"
-                  className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white"
+                  className="w-full bg-brand-primary text-white hover:bg-brand-primary/90"
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center">
                       <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                      Logging in...
+                      Signing in...
                     </span>
                   ) : (
                     <span className="flex items-center justify-center">
                       <LogIn className="mr-2 h-4 w-4" />
-                      Login
+                      Sign In
                     </span>
                   )}
                 </Button>
@@ -159,12 +177,12 @@ export default function Login() {
                 to="/register"
                 className="text-brand-primary hover:underline"
               >
-                Register
+                Create an account
               </Link>
             </div>
           </CardFooter>
         </Card>
-      </div>
+      </motion.div>
     </Layout>
   );
 }
