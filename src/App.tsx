@@ -27,8 +27,10 @@ const AIModels = lazy(() => import("./pages/ai-models/index"));
 const AIModelDetail = lazy(() => import("./pages/ai-models/[id]"));
 const NewAIModel = lazy(() => import("./pages/ai-models/new"));
 const Prompts = lazy(() => import("./pages/prompts/index"));
+const PromptDetail = lazy(() => import("./pages/prompts/[id]"));
 const NewPrompt = lazy(() => import("./pages/prompts/new"));
 const KnowledgeBases = lazy(() => import("./pages/knowledge-base/index"));
+const KnowledgeBaseDetail = lazy(() => import("./pages/knowledge-base/[id]"));
 const NewKnowledgeBase = lazy(() => import("./pages/knowledge-base/new"));
 
 // Loading component for suspense fallback
@@ -184,6 +186,12 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/prompts/:id"
+        element={
+          <ProtectedRoute element={<PromptDetail />} requiredRole="admin" />
+        }
+      />
+      <Route
         path="/knowledge-base"
         element={
           <ProtectedRoute element={<KnowledgeBases />} requiredRole="admin" />
@@ -193,6 +201,15 @@ function AppRoutes() {
         path="/knowledge-base/new"
         element={
           <ProtectedRoute element={<NewKnowledgeBase />} requiredRole="admin" />
+        }
+      />
+      <Route
+        path="/knowledge-base/:id"
+        element={
+          <ProtectedRoute
+            element={<KnowledgeBaseDetail />}
+            requiredRole="admin"
+          />
         }
       />
 

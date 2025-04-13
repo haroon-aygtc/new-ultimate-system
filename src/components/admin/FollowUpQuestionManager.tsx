@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -66,6 +65,7 @@ const FollowUpQuestionManager: React.FC<FollowUpQuestionManagerProps> = ({
     ai_model_id: activeModelId,
     is_active: true,
   });
+  const { toast } = useToast();
 
   // Fetch follow-up questions for the active model
   useEffect(() => {
@@ -297,7 +297,6 @@ const FollowUpQuestionManager: React.FC<FollowUpQuestionManagerProps> = ({
             setIsEditing(false);
             setShowDialog(true);
           }}
-          className="bg-brand-primary text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Question
@@ -306,15 +305,15 @@ const FollowUpQuestionManager: React.FC<FollowUpQuestionManagerProps> = ({
 
       {isLoading && questions.length === 0 ? (
         <div className="text-center py-8">
-          <div className="animate-spin h-8 w-8 border-4 border-brand-primary border-t-transparent rounded-full mx-auto"></div>
-          <p className="mt-2 text-brand-muted">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">
             Loading follow-up questions...
           </p>
         </div>
       ) : questions.length === 0 ? (
-        <Card className="border-dashed border-2 bg-brand-light/10">
+        <Card className="border-dashed border-2 bg-muted/10">
           <CardContent className="flex flex-col items-center justify-center py-8">
-            <p className="text-brand-muted text-center mb-4">
+            <p className="text-muted-foreground text-center mb-4">
               No follow-up questions defined for this AI model yet.
             </p>
             <Button
@@ -525,11 +524,7 @@ const FollowUpQuestionManager: React.FC<FollowUpQuestionManagerProps> = ({
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleSaveQuestion}
-              className="bg-brand-primary text-white"
-              disabled={isLoading}
-            >
+            <Button onClick={handleSaveQuestion} disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>

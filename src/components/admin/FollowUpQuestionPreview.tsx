@@ -148,10 +148,10 @@ const FollowUpQuestionPreview: React.FC<FollowUpQuestionPreviewProps> = ({
       <CardContent className="p-4">
         {isLoading ? (
           <div className="flex justify-center items-center h-[300px]">
-            <div className="animate-spin h-8 w-8 border-4 border-brand-primary border-t-transparent rounded-full"></div>
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
           </div>
         ) : questions.length === 0 ? (
-          <div className="text-center py-8 text-brand-muted">
+          <div className="text-center py-8 text-muted-foreground">
             No active follow-up questions available for preview.
           </div>
         ) : (
@@ -171,17 +171,17 @@ const FollowUpQuestionPreview: React.FC<FollowUpQuestionPreviewProps> = ({
                         className={`h-8 w-8 ${msg.type === "user" ? "ml-2" : "mr-2"}`}
                       >
                         {msg.type === "user" ? (
-                          <div className="bg-brand-accent text-white h-full w-full flex items-center justify-center">
+                          <div className="bg-primary text-primary-foreground h-full w-full flex items-center justify-center">
                             <User className="h-4 w-4" />
                           </div>
                         ) : (
-                          <div className="bg-brand-primary text-white h-full w-full flex items-center justify-center">
+                          <div className="bg-secondary text-secondary-foreground h-full w-full flex items-center justify-center">
                             <Bot className="h-4 w-4" />
                           </div>
                         )}
                       </Avatar>
                       <div
-                        className={`rounded-lg p-3 ${msg.type === "user" ? "bg-brand-accent/10 text-brand-secondary" : "bg-gray-100"}`}
+                        className={`rounded-lg p-3 ${msg.type === "user" ? "bg-primary/10 text-foreground" : "bg-gray-100"}`}
                       >
                         <p className="text-sm">{msg.content}</p>
                       </div>
@@ -191,7 +191,7 @@ const FollowUpQuestionPreview: React.FC<FollowUpQuestionPreviewProps> = ({
 
                 {/* Follow-up question display */}
                 {selectedQuestion && (
-                  <div className="bg-brand-light/30 rounded-lg p-3 border border-brand-primary/20 mt-4">
+                  <div className="bg-muted/30 rounded-lg p-3 border border-primary/20 mt-4">
                     <p className="text-sm font-medium mb-2">
                       {selectedQuestion.question}
                     </p>
@@ -200,7 +200,7 @@ const FollowUpQuestionPreview: React.FC<FollowUpQuestionPreviewProps> = ({
                         <Button
                           key={option.id}
                           variant="outline"
-                          className="w-full justify-start text-left hover:bg-brand-primary/10 hover:text-brand-primary"
+                          className="w-full justify-start text-left hover:bg-primary/10 hover:text-primary"
                           onClick={() => handleOptionSelect(option)}
                         >
                           {option.text}
@@ -213,7 +213,7 @@ const FollowUpQuestionPreview: React.FC<FollowUpQuestionPreviewProps> = ({
             </div>
 
             <div className="flex justify-between items-center">
-              <div className="text-sm text-brand-muted">
+              <div className="text-sm text-muted-foreground">
                 Position:{" "}
                 <span className="font-medium">
                   {selectedQuestion?.position.charAt(0).toUpperCase() +
