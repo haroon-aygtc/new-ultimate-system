@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { getUserRole } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,36 +23,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LogIn, AlertCircle } from "lucide-react";
+import { KeyRound, AlertCircle, ArrowLeft } from "lucide-react";
 import Layout from "@/components/Layout";
 import { motion } from "framer-motion";
 
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function Login() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn } = useAuth();
+export default function ForgotPassword() {
+  const { resetPassword } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(
-    location.state?.message || null,
-  );
-
-  // Get the return URL from query params if it exists
-  const searchParams = new URLSearchParams(location.search);
-  const returnUrl = searchParams.get("returnUrl");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
@@ -63,40 +52,17 @@ export default function Login() {
       setError(null);
       setSuccessMessage(null);
 
-      const { data: authData, error: authError } = await signIn(
-        data.email,
-        data.password,
-      );
+      const { error: resetError } = await resetPassword(data.email);
 
-      if (authError) {
-        setError(authError.message);
+      if (resetError) {
+        setError(resetError.message);
         return;
       }
 
-      if (authData && authData.user) {
-        // Get user role
-        const {
-          role,
-          isGuest,
-          error: roleError,
-        } = await getUserRole(authData.user.id);
-
-        if (roleError) {
-          setError("Error retrieving user role");
-          return;
-        }
-
-        // Redirect based on role
-        if (returnUrl) {
-          navigate(decodeURIComponent(returnUrl));
-        } else if (role === "admin") {
-          navigate("/admin/guest-session-management");
-        } else if (role === "user") {
-          navigate("/"); // Regular users go to home page
-        } else {
-          setError("Invalid user role");
-        }
-      }
+      setSuccessMessage(
+        "Password reset instructions have been sent to your email address.",
+      );
+      form.reset();
     } catch (err) {
       setError("An unexpected error occurred");
       console.error(err);
@@ -116,10 +82,11 @@ export default function Login() {
         <Card className="border-brand-muted/20 shadow-lg bg-white">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center text-brand-secondary">
-              Welcome Back
+              Reset Password
             </CardTitle>
             <CardDescription className="text-center text-brand-muted">
-              Sign in to access your account
+              Enter your email address and we'll send you instructions to reset
+              your password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -159,34 +126,6 @@ export default function Login() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center justify-between">
-                        <FormLabel>Password</FormLabel>
-                        <Link
-                          to="/forgot-password"
-                          className="text-xs text-brand-primary hover:underline"
-                        >
-                          Forgot password?
-                        </Link>
-                      </div>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="••••••••"
-                          autoComplete="current-password"
-                          {...field}
-                          disabled={isLoading}
-                          className="border-brand-muted/30 focus-visible:ring-brand-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <Button
                   type="submit"
                   className="w-full bg-brand-primary text-white hover:bg-brand-primary/90"
@@ -195,12 +134,12 @@ export default function Login() {
                   {isLoading ? (
                     <span className="flex items-center justify-center">
                       <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                      Signing in...
+                      Sending...
                     </span>
                   ) : (
                     <span className="flex items-center justify-center">
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Sign In
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Reset Password
                     </span>
                   )}
                 </Button>
@@ -209,12 +148,12 @@ export default function Login() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
             <div className="text-sm text-center text-brand-muted">
-              Don't have an account?{" "}
               <Link
-                to="/register"
-                className="text-brand-primary hover:underline"
+                to="/login"
+                className="text-brand-primary hover:underline flex items-center justify-center"
               >
-                Create an account
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Back to Login
               </Link>
             </div>
           </CardFooter>

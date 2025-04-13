@@ -1,10 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Home, User, LogOut, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Home, User, LogOut, Menu, X, Search } from "lucide-react";
 import Sidebar from "@/components/admin/Sidebar";
+import { Input } from "@/components/ui/input";
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,9 +14,16 @@ interface LayoutProps {
 export default function Layout({ children, showSidebar = false }: LayoutProps) {
   const { user, signOut, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Searching for:", searchValue);
+    // Implement search functionality here
   };
 
   return (
@@ -51,12 +58,35 @@ export default function Layout({ children, showSidebar = false }: LayoutProps) {
               )}
             </nav>
 
+            {/* Search Bar */}
+            <form
+              onSubmit={handleSearch}
+              className="hidden md:flex items-center mx-4 flex-1 max-w-sm"
+            >
+              <div className="relative w-full">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search..."
+                  className="pl-8 bg-background"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                />
+              </div>
+            </form>
+
             <div className="hidden md:flex items-center space-x-4">
               {isLoading ? (
                 <div className="h-9 w-24 bg-muted animate-pulse rounded-md"></div>
               ) : user ? (
                 <div className="flex items-center gap-4">
                   <span className="text-sm">{user.email}</span>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/account-settings">
+                      <User className="h-4 w-4 mr-2" />
+                      Account
+                    </Link>
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => signOut()}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
@@ -95,6 +125,20 @@ export default function Layout({ children, showSidebar = false }: LayoutProps) {
         {mobileMenuOpen && (
           <div className="md:hidden border-t py-4">
             <div className="container space-y-4">
+              {/* Mobile Search */}
+              <form onSubmit={handleSearch} className="mb-4">
+                <div className="relative w-full">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search..."
+                    className="pl-8 bg-background w-full"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                  />
+                </div>
+              </form>
+
               <Link
                 to="/"
                 className="flex items-center py-2 text-sm font-medium transition-colors hover:text-brand-primary"
@@ -118,6 +162,20 @@ export default function Layout({ children, showSidebar = false }: LayoutProps) {
               ) : user ? (
                 <div className="space-y-2">
                   <p className="text-sm">{user.email}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="w-full mb-2"
+                  >
+                    <Link
+                      to="/account-settings"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Account
+                    </Link>
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

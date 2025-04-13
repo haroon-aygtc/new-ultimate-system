@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,30 +14,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { UserPlus, AlertCircle } from "lucide-react";
+import { KeyRound, AlertCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import { motion } from "framer-motion";
 
 const formSchema = z
   .object({
-    email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z
       .string()
       .min(6, "Password must be at least 6 characters"),
-    acceptTerms: z.boolean().refine((val) => val === true, {
-      message: "You must accept the terms and conditions",
-    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -46,47 +40,58 @@ const formSchema = z
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function Register() {
+export default function ResetPassword() {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hash, setHash] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
       password: "",
       confirmPassword: "",
-      acceptTerms: false,
     },
   });
 
+  useEffect(() => {
+    // Extract the hash from the URL
+    const hashFromUrl = location.hash.replace("#", "");
+    if (hashFromUrl) {
+      setHash(hashFromUrl);
+    } else {
+      setError("Invalid or missing reset token. Please try again.");
+    }
+  }, [location]);
+
   const onSubmit = async (data: FormValues) => {
+    if (!hash) {
+      setError("Invalid or missing reset token. Please try again.");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      // Register as a regular user
-      const { data: authData, error: authError } = await signUp(
-        data.email,
-        data.password,
-        "user", // Explicitly set role to 'user'
-      );
+      // Update the user's password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: data.password,
+      });
 
-      if (authError) {
-        setError(authError.message);
+      if (updateError) {
+        setError(updateError.message);
         return;
       }
 
-      if (authData) {
-        navigate("/login", {
-          state: {
-            message:
-              "Registration successful! Please check your email to confirm your account.",
-          },
-        });
-      }
+      // Redirect to login with success message
+      navigate("/login", {
+        state: {
+          message:
+            "Password has been reset successfully. You can now log in with your new password.",
+        },
+      });
     } catch (err) {
       setError("An unexpected error occurred");
       console.error(err);
@@ -106,10 +111,10 @@ export default function Register() {
         <Card className="border-brand-muted/20 shadow-lg bg-white">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center text-brand-secondary">
-              Create an Account
+              Set New Password
             </CardTitle>
             <CardDescription className="text-center text-brand-muted">
-              Enter your details to register for a new account
+              Enter your new password below
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -126,37 +131,17 @@ export default function Register() {
               >
                 <FormField
                   control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="your.email@example.com"
-                          type="email"
-                          autoComplete="email"
-                          {...field}
-                          disabled={isLoading}
-                          className="border-brand-muted/30 focus-visible:ring-brand-primary"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>New Password</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
                           placeholder="••••••••"
                           autoComplete="new-password"
                           {...field}
-                          disabled={isLoading}
+                          disabled={isLoading || !hash}
                           className="border-brand-muted/30 focus-visible:ring-brand-primary"
                         />
                       </FormControl>
@@ -169,14 +154,14 @@ export default function Register() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel>Confirm New Password</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
                           placeholder="••••••••"
                           autoComplete="new-password"
                           {...field}
-                          disabled={isLoading}
+                          disabled={isLoading || !hash}
                           className="border-brand-muted/30 focus-visible:ring-brand-primary"
                         />
                       </FormControl>
@@ -184,60 +169,26 @@ export default function Register() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="acceptTerms"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-4 border">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          I accept the{" "}
-                          <Link
-                            to="/terms"
-                            className="text-brand-primary hover:underline"
-                          >
-                            terms and conditions
-                          </Link>
-                        </FormLabel>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
                 <Button
                   type="submit"
                   className="w-full bg-brand-primary text-white hover:bg-brand-primary/90"
-                  disabled={isLoading}
+                  disabled={isLoading || !hash}
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center">
                       <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-                      Registering...
+                      Updating...
                     </span>
                   ) : (
                     <span className="flex items-center justify-center">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Register
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      Set New Password
                     </span>
                   )}
                 </Button>
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-2">
-            <div className="text-sm text-center text-brand-muted">
-              Already have an account?{" "}
-              <Link to="/login" className="text-brand-primary hover:underline">
-                Login
-              </Link>
-            </div>
-          </CardFooter>
         </Card>
       </motion.div>
     </Layout>

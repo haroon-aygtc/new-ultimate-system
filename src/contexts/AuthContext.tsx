@@ -10,6 +10,9 @@ import {
   getCurrentUser,
   getSession,
   signOut,
+  signIn as supabaseSignIn,
+  signUp as supabaseSignUp,
+  resetPassword as supabaseResetPassword,
   supabase,
 } from "@/lib/supabaseClient";
 
@@ -29,7 +32,21 @@ type AuthContextType = {
   authUser: AuthUser | null;
   session: Session | null;
   isLoading: boolean;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ data: any; error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    role?: "user" | "admin",
+  ) => Promise<{ data: any; error: any }>;
   signOut: () => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ data: any; error: any }>;
+  updateUserProfile: (profile: {
+    name?: string;
+    phone?: string;
+  }) => Promise<{ error: any }>;
   hasPermission: (requiredRole: UserRole) => boolean;
 };
 
@@ -159,12 +176,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return roleHierarchy[authUser.role] >= roleHierarchy[requiredRole];
   };
 
+  // Update user profile
+  const updateUserProfile = async (profile: {
+    name?: string;
+    phone?: string;
+  }) => {
+    if (!user) {
+      return { error: new Error("Not authenticated") };
+    }
+
+    try {
+      // Update user metadata in Supabase Auth
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: profile,
+      });
+
+      if (updateError) {
+        return { error: updateError };
+      }
+
+      // If the user is in auth_users table, update there too
+      if (authUser && !authUser.isGuest) {
+        const { error: dbError } = await supabase
+          .from("auth_users")
+          .update(profile)
+          .eq("id", user.id);
+
+        if (dbError) {
+          return { error: dbError };
+        }
+      }
+
+      // If the user is a guest user, update in guest_users table
+      if (authUser && authUser.isGuest) {
+        const { error: dbError } = await supabase
+          .from("guest_users")
+          .update(profile)
+          .eq("id", user.id);
+
+        if (dbError) {
+          return { error: dbError };
+        }
+      }
+
+      // Update local state
+      setAuthUser((prev) => (prev ? { ...prev, ...profile } : null));
+
+      return { error: null };
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      return { error };
+    }
+  };
+
   const value = {
     user,
     authUser,
     session,
     isLoading,
     hasPermission,
+    signIn: supabaseSignIn,
+    signUp: supabaseSignUp,
+    resetPassword: supabaseResetPassword,
+    updateUserProfile,
     signOut: async () => {
       const result = await signOut();
       if (!result.error) {

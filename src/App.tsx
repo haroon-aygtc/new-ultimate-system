@@ -15,6 +15,9 @@ import { useAuth } from "./contexts/AuthContext";
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AccountSettings = lazy(() => import("./pages/AccountSettings"));
 const GuestSessionManagement = lazy(
   () => import("./pages/admin/GuestSessionManagement"),
 );
@@ -106,6 +109,14 @@ function AppRoutes() {
         path="/register"
         element={<PublicRoute element={<Register />} />}
       />
+      <Route
+        path="/forgot-password"
+        element={<PublicRoute element={<ForgotPassword />} />}
+      />
+      <Route
+        path="/reset-password"
+        element={<PublicRoute element={<ResetPassword />} />}
+      />
 
       {/* Protected routes */}
       <Route
@@ -116,6 +127,12 @@ function AppRoutes() {
             requiredRole="user"
             guestAllowed={true}
           />
+        }
+      />
+      <Route
+        path="/account-settings"
+        element={
+          <ProtectedRoute element={<AccountSettings />} requiredRole="user" />
         }
       />
 
